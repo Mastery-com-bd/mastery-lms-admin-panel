@@ -19,6 +19,7 @@ import {
   FileText,
   Headset,
   LayoutDashboard,
+  LightbulbIcon,
   Moon,
   Settings,
   Sun,
@@ -28,14 +29,16 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { memo } from 'react';
 
 const menuItems = [
   { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { title: 'Payments', icon: BarChart3, href: '/dashboard/analytics' },
-  { title: 'Students', icon: Users, href: '/dashboard/users' },
+  { title: 'Students', icon: Users, href: '/dashboard/students' },
   { title: 'Courses', icon: FileText, href: '/dashboard/content' },
-  { title: 'Supports', icon: Headset, href: '/dashboard/activity' },
+  { title: 'Quiz', icon: LightbulbIcon, href: '/dashboard/quiz' },
+  { title: 'Supports', icon: Headset, href: '/dashboard/supports' },
   { title: 'Live', icon: Video, href: '/dashboard/database' },
   { title: 'Notifications', icon: Bell, href: '/dashboard/notifications' },
   { title: 'Settings', icon: Settings, href: '/dashboard/settings' },
@@ -43,6 +46,7 @@ const menuItems = [
 
 export const AdminSidebar = memo(() => {
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
 
   return (
     <Sidebar collapsible="icon">
@@ -72,8 +76,8 @@ export const AdminSidebar = memo(() => {
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild>
+                  <SidebarMenuItem  key={item.href}>
+                    <SidebarMenuButton  className={`${pathname === item.href ? 'bg-primary text-white border rounded-md' : ''} hover:bg-primary/70 hover:text-white`} asChild>
                       <Link prefetch={false} href={item.href}>
                         <Icon />
                         <span>{item.title}</span>
