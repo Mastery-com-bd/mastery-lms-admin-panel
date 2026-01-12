@@ -74,26 +74,18 @@ export const DashboardHeader = memo(() => {
 
           {/* Desktop Actions */}
           <div className="hidden items-center gap-2 md:flex">
-            <Button variant="outline" size="sm">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
+              onClick={() => {
+                const root = document.documentElement;
+                const currentTheme = root.classList.contains("dark") ? "dark" : "light";
+                root.classList.toggle("dark");
+                localStorage.setItem("theme", currentTheme === "dark" ? "light" : "dark");
+              }}
             >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
+              <span className="hidden dark:inline">🌞</span>
+              <span className="dark:hidden">🌙</span>
             </Button>
           </div>
 

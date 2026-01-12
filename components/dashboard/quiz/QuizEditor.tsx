@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,12 +32,11 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { QuestionBuilder } from "./QuestionBuilder";
 // import { QuestionBuilder } from "./QuestionBuilder";
 
 interface QuizEditorProps {
   quiz?: AdminQuiz | null;
-  onSave: (quiz: AdminQuiz) => void;
-  onBack: () => void;
 }
 
 interface ValidationErrors {
@@ -44,17 +45,23 @@ interface ValidationErrors {
   questions?: string;
 }
 
-export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
+export function QuizEditor({ quiz }: QuizEditorProps) {
   const isEditing = !!quiz;
 
   // Form state
   const [title, setTitle] = useState(quiz?.title || "");
   const [description, setDescription] = useState(quiz?.description || "");
   const [courseId, setCourseId] = useState(quiz?.courseId || "");
-  const [timeLimit, setTimeLimit] = useState<number | null>(quiz?.timeLimit ?? null);
+  const [timeLimit, setTimeLimit] = useState<number | null>(
+    quiz?.timeLimit ?? null
+  );
   const [passingScore, setPassingScore] = useState(quiz?.passingScore || 70);
-  const [shuffleQuestions, setShuffleQuestions] = useState(quiz?.shuffleQuestions || false);
-  const [questions, setQuestions] = useState<AdminQuizQuestion[]>(quiz?.questions || []);
+  const [shuffleQuestions, setShuffleQuestions] = useState(
+    quiz?.shuffleQuestions || false
+  );
+  const [questions, setQuestions] = useState<AdminQuizQuestion[]>(
+    quiz?.questions || []
+  );
   const [activeTab, setActiveTab] = useState("info");
   const [errors, setErrors] = useState<ValidationErrors>({});
 
@@ -116,10 +123,7 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
       updatedAt: now,
     };
 
-    onSave(quizData);
-    toast.success(
-      status === "published" ? "Quiz published successfully!" : "Quiz saved as draft"
-    );
+    console.log(quizData);
   };
 
   return (
@@ -132,7 +136,11 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.history.back()}
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -225,7 +233,8 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
                       value={title}
                       onChange={(e) => {
                         setTitle(e.target.value);
-                        if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+                        if (errors.title)
+                          setErrors((prev) => ({ ...prev, title: undefined }));
                       }}
                       className={errors.title ? "border-destructive" : ""}
                     />
@@ -247,17 +256,23 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
 
                   <div className="space-y-2">
                     <Label>
-                      Assign to Course <span className="text-destructive">*</span>
+                      Assign to Course{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Select
                       value={courseId}
                       onValueChange={(value) => {
                         setCourseId(value);
                         if (errors.courseId)
-                          setErrors((prev) => ({ ...prev, courseId: undefined }));
+                          setErrors((prev) => ({
+                            ...prev,
+                            courseId: undefined,
+                          }));
                       }}
                     >
-                      <SelectTrigger className={errors.courseId ? "border-destructive" : ""}>
+                      <SelectTrigger
+                        className={errors.courseId ? "border-destructive" : ""}
+                      >
                         <SelectValue placeholder="Select a course" />
                       </SelectTrigger>
                       <SelectContent>
@@ -274,7 +289,9 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
                       </SelectContent>
                     </Select>
                     {errors.courseId && (
-                      <p className="text-sm text-destructive">{errors.courseId}</p>
+                      <p className="text-sm text-destructive">
+                        {errors.courseId}
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -296,7 +313,9 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
                       placeholder="No limit"
                       value={timeLimit ?? ""}
                       onChange={(e) =>
-                        setTimeLimit(e.target.value ? Number(e.target.value) : null)
+                        setTimeLimit(
+                          e.target.value ? Number(e.target.value) : null
+                        )
                       }
                       min={1}
                     />
@@ -340,12 +359,18 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Questions</span>
+                    <span className="text-muted-foreground">
+                      Total Questions
+                    </span>
                     <span className="font-medium">{questions.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Valid Questions</span>
-                    <span className="font-medium text-success">{validQuestions.length}</span>
+                    <span className="text-muted-foreground">
+                      Valid Questions
+                    </span>
+                    <span className="font-medium text-success">
+                      {validQuestions.length}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Time Limit</span>
@@ -365,7 +390,7 @@ export function QuizEditor({ quiz, onSave, onBack }: QuizEditorProps) {
 
         {/* Questions Tab */}
         <TabsContent value="questions" className="mt-6">
-          {/* <QuestionBuilder questions={questions} onChange={setQuestions} /> */}
+          <QuestionBuilder questions={questions} onChange={setQuestions} />
           {errors.questions && (
             <p className="text-sm text-destructive mt-4 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />

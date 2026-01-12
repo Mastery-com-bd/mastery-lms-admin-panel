@@ -48,6 +48,7 @@ import {
   FileText,
 } from "lucide-react";
 import { AdminQuiz, mockCourses } from "@/constants/adminQuizMockData";
+import Link from "next/link";
 
 interface QuizListTableProps {
   quizzes: AdminQuiz[];
@@ -138,8 +139,10 @@ export function QuizListTable({
           </Select>
         </div>
         <Button onClick={onCreateNew} className="gap-2">
+          <Link href={"/dashboard/quiz/create"} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Create Quiz
+          </Link>
         </Button>
       </motion.div>
 
