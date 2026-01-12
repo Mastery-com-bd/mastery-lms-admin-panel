@@ -1,5 +1,10 @@
-'use client';
+"use client";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -11,13 +16,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   BarChart3,
   Bell,
-  FileText,
+  BookOpen,
+  ChevronRight,
+  GraduationCap,
   Headset,
+  Layers,
   LayoutDashboard,
   LightbulbIcon,
   Moon,
@@ -25,23 +36,145 @@ import {
   Sun,
   User,
   Users,
-  Video
-} from 'lucide-react';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { memo } from 'react';
+  Video,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { memo } from "react";
 
-const menuItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { title: 'Payments', icon: BarChart3, href: '/dashboard/analytics' },
-  { title: 'Students', icon: Users, href: '/dashboard/students' },
-  { title: 'Courses', icon: FileText, href: '/dashboard/content' },
-  { title: 'Quiz', icon: LightbulbIcon, href: '/dashboard/quiz' },
-  { title: 'Supports', icon: Headset, href: '/dashboard/supports' },
-  { title: 'Live', icon: Video, href: '/dashboard/database' },
-  { title: 'Notifications', icon: Bell, href: '/dashboard/notifications' },
-  { title: 'Settings', icon: Settings, href: '/dashboard/settings' },
+const navigation = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+    isActive: true,
+  },
+  {
+    title: "Analytics",
+    url: "/dashboard/analytics",
+    icon: BarChart3,
+  },
+  {
+    title: "Categories",
+    icon: Layers,
+    items: [
+      {
+        title: "All Categories",
+        url: "/dashboard/categories",
+      },
+      {
+        title: "Create Category",
+        url: "/dashboard/categories/create",
+      },
+    ],
+  },
+  {
+    title: "Courses",
+    icon: BookOpen,
+    items: [
+      {
+        title: "All Courses",
+        url: "/dashboard/courses",
+      },
+      {
+        title: "Create Course",
+        url: "/dashboard/courses/create",
+      },
+      {
+        title: "Course Reviews",
+        url: "/dashboard/courses/reviews",
+      },
+    ],
+  },
+  {
+    title: "Students",
+    icon: GraduationCap,
+    items: [
+      {
+        title: "All Students",
+        url: "/dashboard/students",
+      },
+      {
+        title: "Enrollments",
+        url: "/dashboard/students/enrollments",
+      },
+      {
+        title: "Progress",
+        url: "/dashboard/students/progress",
+      },
+    ],
+  },
+  {
+    title: "Instructors",
+    icon: User,
+    items: [
+      {
+        title: "All Instructors",
+        url: "/dashboard/instructors",
+      },
+      {
+        title: "Applications",
+        url: "/dashboard/instructors/applications",
+      },
+      {
+        title: "Payouts",
+        url: "/dashboard/instructors/payouts",
+      },
+    ],
+  },
+  {
+    title: "Users",
+    icon: Users,
+    items: [
+      {
+        title: "All Users",
+        url: "/dashboard/users",
+      },
+      {
+        title: "Roles & Permissions",
+        url: "/dashboard/users/roles",
+      },
+    ],
+  },
+  {
+    title: "Quiz & Assignments",
+    icon: LightbulbIcon,
+    items: [
+      {
+        title: "All Quizzes",
+        url: "/dashboard/quiz",
+      },
+      {
+        title: "Create Quiz",
+        url: "/dashboard/quiz/create",
+      },
+      {
+        title: "Assignments",
+        url: "/dashboard/assignments",
+      },
+    ],
+  },
+  {
+    title: "Supports",
+    url: "/dashboard/supports",
+    icon: Headset,
+  },
+  {
+    title: "Live Sessions",
+    url: "/dashboard/live",
+    icon: Video,
+  },
+  {
+    title: "Notifications",
+    url: "/dashboard/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Settings",
+    url: "/dashboard/settings",
+    icon: Settings,
+  },
 ];
 
 export const AdminSidebar = memo(() => {
@@ -54,12 +187,12 @@ export const AdminSidebar = memo(() => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link prefetch={false} href="#dashboard">
+              <Link prefetch={false} href="/dashboard">
                 <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Mastary LMS</span>
+                  <span className="truncate font-semibold">Mastery LMS</span>
                   <span className="truncate text-xs">Admin Panel</span>
                 </div>
               </Link>
@@ -70,16 +203,62 @@ export const AdminSidebar = memo(() => {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {navigation.map((item) => {
                 const Icon = item.icon;
+
+                if (item.items) {
+                  return (
+                    <Collapsible
+                      key={item.title}
+                      asChild
+                      defaultOpen={item.items.some((subItem) =>
+                        pathname.startsWith(subItem.url)
+                      )}
+                      className="group/collapsible"
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton asChild tooltip={item.title}>
+                            <div className="flex items-center gap-2 w-full">
+                              {item.icon && <item.icon className="h-4 w-4" />}
+                              <span className="flex-1">{item.title}</span>
+                              <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </div>
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.items.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.title}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={pathname === subItem.url}
+                                >
+                                  <Link href={subItem.url}>
+                                    <span>{subItem.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+
                 return (
-                  <SidebarMenuItem  key={item.href}>
-                    <SidebarMenuButton  className={`${pathname === item.href ? 'bg-primary text-white border rounded-md' : ''} hover:bg-primary/70 hover:text-white`} asChild>
-                      <Link prefetch={false} href={item.href}>
-                        <Icon />
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.url || "#"}>
+                        {item.icon && <item.icon className="h-4 w-4" />}
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -95,15 +274,16 @@ export const AdminSidebar = memo(() => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              tooltip={theme === "dark" ? "Light Mode" : "Dark Mode"}
             >
-              {theme === 'dark' ? <Sun /> : <Moon />}
-              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              {theme === "dark" ? <Sun /> : <Moon />}
+              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link prefetch={false} href="#profile">
+            <SidebarMenuButton asChild tooltip="Admin Profile">
+              <Link prefetch={false} href="/dashboard/profile">
                 <User />
                 <span>Admin Profile</span>
               </Link>
@@ -116,4 +296,4 @@ export const AdminSidebar = memo(() => {
   );
 });
 
-AdminSidebar.displayName = 'AdminSidebar';
+AdminSidebar.displayName = "AdminSidebar";
