@@ -26,6 +26,7 @@ import {
   Bell,
   BookOpen,
   ChevronRight,
+  DotSquareIcon,
   GraduationCap,
   GripHorizontal,
   Headset,
@@ -99,6 +100,20 @@ const navigation = [
       {
         title: "Create Section",
         url: "/dashboard/section/create",
+      },
+    ],
+  },
+  {
+    title: "Lesson",
+    icon: DotSquareIcon,
+    items: [
+      {
+        title: "All Lessons",
+        url: "/dashboard/lesson",
+      },
+      {
+        title: "Create Lesson",
+        url: "/dashboard/lesson/create",
       },
     ],
   },
