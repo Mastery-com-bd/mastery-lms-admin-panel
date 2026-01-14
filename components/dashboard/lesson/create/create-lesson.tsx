@@ -47,14 +47,14 @@ const formSchema = z.object({
   order: z.string().min(1, "Order must be a positive number"),
   isPreview: z.boolean(),
   videoUrl: z
-    .instanceof(FileList)
-    .refine((files) => files.length > 0, "Video file is required")
+    .instanceof(File)
+    .refine((file) => file !== undefined, "Video file is required")
     .refine(
-      (files) => files[0]?.type.startsWith("video/"),
+      (file) => file?.type.startsWith("video/"),
       "File must be a video"
     )
     .refine(
-      (files) => files[0]?.size <= 100 * 1024 * 1024,
+      (file) => file?.size <= 100 * 1024 * 1024,
       "Video size must be less than 100MB"
     ), // 100MB limit example
 });
@@ -145,7 +145,7 @@ export default function CreateLesson() {
         return;
       }
       setVideoPreview(URL.createObjectURL(file));
-      form.setValue("videoUrl", e.target.files as unknown as FileList);
+      form.setValue("videoUrl", file);
     }
   };
 
@@ -163,8 +163,8 @@ export default function CreateLesson() {
       formData.append("order", values.order);
       formData.append("isPreview", String(values.isPreview));
 
-      if (values.videoUrl && values.videoUrl.length > 0) {
-        formData.append("videoUrl", values.videoUrl[0]);
+      if (values.videoUrl) {
+        formData.append("videoUrl", values.videoUrl);
       }
 
       const response = await fetch(
@@ -415,8 +415,8 @@ export default function CreateLesson() {
                           onChange={handleVideoChange}
                         />
                         <span className="text-sm text-muted-foreground">
-                          {value instanceof FileList && value.length > 0
-                            ? value[0].name
+                          {value instanceof File && value.size > 0
+                            ? value.name
                             : "No video selected"}
                         </span>
                       </div>

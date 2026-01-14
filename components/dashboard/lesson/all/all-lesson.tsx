@@ -359,7 +359,7 @@ const AllLesson = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/lessons/update/${lesson.id}`}>
+                              <Link href={`/dashboard/lesson/update/${lesson.id}`}>
                                 Edit lesson
                               </Link>
                             </DropdownMenuItem>
