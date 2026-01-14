@@ -27,6 +27,7 @@ import {
   BookOpen,
   ChevronRight,
   GraduationCap,
+  GripHorizontal,
   Headset,
   Layers,
   LayoutDashboard,
@@ -84,6 +85,20 @@ const navigation = [
       {
         title: "Course Reviews",
         url: "/dashboard/courses/reviews",
+      },
+    ],
+  },
+  {
+    title: "Sections",
+    icon: GripHorizontal,
+    items: [
+      {
+        title: "All Sections",
+        url: "/dashboard/section",
+      },
+      {
+        title: "Create Section",
+        url: "/dashboard/section/create",
       },
     ],
   },
