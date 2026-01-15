@@ -4,7 +4,6 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const paramsData = await params;
   const lessonId = paramsData.id;
 
-  console.log("From Page.tsx File", lessonId);
   return (
     <div>
       <UpdateLesson lessonId={lessonId} />

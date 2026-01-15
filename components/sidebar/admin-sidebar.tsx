@@ -118,6 +118,20 @@ const navigation = [
     ],
   },
   {
+    title: "Quiz",
+    icon: LightbulbIcon,
+    items: [
+      {
+        title: "All Quizzes",
+        url: "/dashboard/quiz",
+      },
+      {
+        title: "Create Quiz",
+        url: "/dashboard/quiz/create",
+      },
+    ],
+  },
+  {
     title: "Students",
     icon: GraduationCap,
     items: [

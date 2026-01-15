@@ -40,15 +40,13 @@ const formSchema = z.object({
   order: z.string().min(1, "Order must be a positive number"),
   isPreview: z.boolean(),
   videoUrl: z
-    .union([
-      z
-        .instanceof(FileList)
-        .refine((files) => files.length > 0, "Video file is required"),
-      z.string(), // Allow string for existing video URL
-      z.undefined(),
-      z.null(),
-    ])
-    .optional(),
+    .instanceof(File)
+    .refine((file) => file !== undefined, "Video file is required")
+    .refine((file) => file?.type.startsWith("video/"), "File must be a video")
+    .refine(
+      (file) => file?.size <= 100 * 1024 * 1024,
+      "Video size must be less than 100MB"
+    ),
 });
 
 interface Section {
@@ -188,7 +186,7 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
         return;
       }
       setVideoPreview(URL.createObjectURL(file));
-      form.setValue("videoUrl", e.target.files as unknown as FileList);
+      form.setValue("videoUrl", file);
     }
   };
 
@@ -206,8 +204,8 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
       formData.append("order", values.order);
       formData.append("isPreview", String(values.isPreview));
 
-      if (values.videoUrl instanceof FileList && values.videoUrl.length > 0) {
-        formData.append("videoUrl", values.videoUrl[0]);
+      if (values.videoUrl) {
+        formData.append("videoUrl", values.videoUrl);
       }
 
       const response = await fetch(
@@ -393,7 +391,7 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
                           }
                         >
                           <Upload className="w-4 h-4 mr-2" />
-                          {videoPreview ? "Change Video" : "Upload Video"}
+                          Upload Video
                         </Button>
                         <Input
                           {...field}
@@ -404,9 +402,9 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
                           onChange={handleVideoChange}
                         />
                         <span className="text-sm text-muted-foreground">
-                          {value instanceof FileList && value.length > 0
-                            ? value[0].name
-                            : "Current video"}
+                          {value instanceof File && value.size > 0
+                            ? value.name
+                            : "No video selected"}
                         </span>
                       </div>
 
@@ -430,8 +428,7 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Upload a new video to replace the current one. Max size
-                    100MB.
+                    Upload a video file for the lesson. Max size 100MB.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
