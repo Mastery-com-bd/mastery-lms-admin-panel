@@ -27,6 +27,7 @@ import {
   BookOpen,
   ChevronRight,
   DotSquareIcon,
+  FileQuestion,
   GraduationCap,
   GripHorizontal,
   Headset,
@@ -128,6 +129,34 @@ const navigation = [
       {
         title: "Create Quiz",
         url: "/dashboard/quiz/create",
+      },
+    ],
+  },
+  {
+    title: "Questions",
+    icon: FileQuestion,
+    items: [
+      {
+        title: "All Questions",
+        url: "/dashboard/questions",
+      },
+      {
+        title: "Create Question",
+        url: "/dashboard/questions/create",
+      },
+    ],
+  },
+  {
+    title: "Live Class",
+    icon: Video,
+    items: [
+      {
+        title: "All Live Classes",
+        url: "/dashboard/live-class",
+      },
+      {
+        title: "Create Live Class",
+        url: "/dashboard/live-class/create",
       },
     ],
   },

@@ -253,8 +253,11 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
             className="flex-1 sm:flex-none gap-2"
             disabled={isSubmitting}
           >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            <Send className="w-4 h-4" />
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
             Update
           </Button>
         </div>
