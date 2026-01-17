@@ -161,6 +161,16 @@ const navigation = [
     ],
   },
   {
+    title: "Supports",
+    icon: Headset,
+    items: [
+      {
+        title: "All Supports",
+        url: "/dashboard/supports",
+      },
+    ],
+  },
+  {
     title: "Students",
     icon: GraduationCap,
     items: [
