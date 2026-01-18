@@ -23,11 +23,11 @@ import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import { motion } from "motion/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useParams, useRouter } from "next/navigation";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -49,12 +49,14 @@ interface Lesson {
   title: string;
 }
 
-export function QuizEditor() {
+export default function UpdateQuiz({ quizId }: { quizId?: string }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [loadingQuiz, setLoadingQuiz] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -71,6 +73,12 @@ export function QuizEditor() {
   });
 
   const selectedCourseId = form.watch("courseId");
+  const selectedLessonId = form.watch("lessonId");
+  const params = useParams() as Record<string, string>;
+  const effectiveQuizId = useMemo(
+    () => quizId ?? params?.quizId ?? params?.id,
+    [quizId, params]
+  );
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -92,6 +100,42 @@ export function QuizEditor() {
     };
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      if (!effectiveQuizId) return;
+      setLoadingQuiz(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${effectiveQuizId}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch quiz");
+        }
+        const resData = await response.json();
+        const quiz = resData.data || resData;
+        form.reset({
+          courseId: quiz.courseId || "",
+          lessonId: quiz.lessonId || "",
+          title: quiz.title || "",
+          description: quiz.description || "",
+          type: quiz.type || "LESSON",
+          passingScore: Number(quiz.passingScore ?? 70),
+          timeLimit:
+            quiz.timeLimit === null || quiz.timeLimit === undefined
+              ? null
+              : Number(quiz.timeLimit),
+        });
+      } catch (error) {
+        console.error("Failed to fetch quiz:", error);
+        toast.error("Failed to load quiz data");
+      } finally {
+        setLoadingQuiz(false);
+      }
+    };
+    fetchQuiz();
+  }, [effectiveQuizId, quizId, form]);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -120,7 +164,7 @@ export function QuizEditor() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    showLoading("Creating quiz...");
+    showLoading("Updating quiz...");
 
     try {
       const body = {
@@ -130,13 +174,13 @@ export function QuizEditor() {
         description: values.description || "",
         type: values.type,
         passingScore: values.passingScore,
-        timeLimit: values.timeLimit ?? 1,
+        timeLimit: values.timeLimit ?? null,
       };
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${effectiveQuizId}`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -148,22 +192,12 @@ export function QuizEditor() {
       if (!response.ok) {
         const errorData = await response.json();
         console.log(errorData);
-        throw new Error(errorData.message || "Failed to create quiz");
+        throw new Error(errorData.message || "Failed to update quiz");
       }
 
       toast.dismiss();
-      showSuccess({ message: "Quiz created successfully" });
-      form.reset({
-        courseId: "",
-        lessonId: "",
-        title: "",
-        description: "",
-        type: "LESSON",
-        passingScore: 70,
-        timeLimit: null,
-      });
-      router.refresh();
-      setLessons([]);
+      router.push("/dashboard/quiz");
+      showSuccess({ message: "Quiz updated successfully" });
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -177,6 +211,11 @@ export function QuizEditor() {
   }
 
   return (
+    (loadingQuiz || loadingCourses || (selectedCourseId && loadingLessons)) ? (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ) : (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -193,11 +232,9 @@ export function QuizEditor() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">
-              Create New Quiz
-            </h2>
+            <h2 className="text-2xl font-bold text-foreground">Update Quiz</h2>
             <p className="text-sm text-muted-foreground">
-              Set up quiz details and add questions
+              Edit quiz details and settings
             </p>
           </div>
         </div>
@@ -216,9 +253,12 @@ export function QuizEditor() {
             className="flex-1 sm:flex-none gap-2"
             disabled={isSubmitting}
           >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            <Send className="w-4 h-4" />
-            Publish
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            Update
           </Button>
         </div>
       </div>
@@ -279,29 +319,19 @@ export function QuizEditor() {
                           Assign to Course{" "}
                           <span className="text-destructive">*</span>
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={
-                                  loadingCourses
-                                    ? "Loading courses..."
-                                    : "Select a course"
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {courses.map((course) => (
-                              <SelectItem key={course.id} value={course.id}>
-                                {course.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <>
+                            <input type="hidden" {...field} />
+                            <Input
+                              value={
+                                courses.find(
+                                  (course) => course.id === selectedCourseId
+                                )?.title || ""
+                              }
+                              disabled
+                            />
+                          </>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -315,32 +345,19 @@ export function QuizEditor() {
                         <FormLabel>
                           Lesson <span className="text-destructive">*</span>
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={!selectedCourseId || lessons.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={
-                                  !selectedCourseId
-                                    ? "Select a course first"
-                                    : loadingLessons
-                                    ? "Loading lessons..."
-                                    : "Select a lesson"
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {lessons.map((lesson) => (
-                              <SelectItem key={lesson.id} value={lesson.id}>
-                                {lesson.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <>
+                            <input type="hidden" {...field} />
+                            <Input
+                              value={
+                                lessons.find(
+                                  (lesson) => lesson.id === selectedLessonId
+                                )?.title || ""
+                              }
+                              disabled
+                            />
+                          </>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -437,5 +454,6 @@ export function QuizEditor() {
         </form>
       </Form>
     </motion.div>
+    )
   );
 }

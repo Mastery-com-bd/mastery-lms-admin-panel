@@ -26,6 +26,8 @@ import {
   Bell,
   BookOpen,
   ChevronRight,
+  DotSquareIcon,
+  FileQuestion,
   GraduationCap,
   GripHorizontal,
   Headset,
@@ -99,6 +101,72 @@ const navigation = [
       {
         title: "Create Section",
         url: "/dashboard/section/create",
+      },
+    ],
+  },
+  {
+    title: "Lesson",
+    icon: DotSquareIcon,
+    items: [
+      {
+        title: "All Lessons",
+        url: "/dashboard/lesson",
+      },
+      {
+        title: "Create Lesson",
+        url: "/dashboard/lesson/create",
+      },
+    ],
+  },
+  {
+    title: "Quiz",
+    icon: LightbulbIcon,
+    items: [
+      {
+        title: "All Quizzes",
+        url: "/dashboard/quiz",
+      },
+      {
+        title: "Create Quiz",
+        url: "/dashboard/quiz/create",
+      },
+    ],
+  },
+  {
+    title: "Questions",
+    icon: FileQuestion,
+    items: [
+      {
+        title: "All Questions",
+        url: "/dashboard/questions",
+      },
+      {
+        title: "Create Question",
+        url: "/dashboard/questions/create",
+      },
+    ],
+  },
+  {
+    title: "Live Class",
+    icon: Video,
+    items: [
+      {
+        title: "All Live Classes",
+        url: "/dashboard/live-class",
+      },
+      {
+        title: "Create Live Class",
+        url: "/dashboard/live-class/create",
+      },
+    ],
+  },
+  {
+    title: "Supports",
+    icon: Headset,
+    items: [
+      {
+        title: "All Supports",
+        url: "/dashboard/supports",
       },
     ],
   },

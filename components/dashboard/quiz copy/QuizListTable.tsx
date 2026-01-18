@@ -1,5 +1,25 @@
 "use client";
 
+import { useState } from "react";
+import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,15 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,126 +39,44 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { showError, showLoading, showSuccess } from "@/lib/toast";
-import { format } from "date-fns";
-import {
-  FileText,
-  Loader2,
   MoreHorizontal,
   Pencil,
-  Plus,
-  Search,
+  Copy,
   Trash2,
+  Search,
+  Plus,
+  FileText,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { AdminQuiz, mockCourses } from "@/constants/adminQuizMockData";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  courseId: string;
-  lessonId: string;
-  type: string;
-  passingScore: number;
-  timeLimit: number | null;
-  questions?: unknown[];
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-  // courseName might not be in API, we can derive it or it might be there
-  courseName?: string;
+interface QuizListTableProps {
+  quizzes: AdminQuiz[];
+  onEdit?: (quiz: AdminQuiz) => void;
+  onDuplicate?: (quiz: AdminQuiz) => void;
+  // onDelete?: (quizId: string) => void;
+  onCreateNew?: () => void;
 }
 
-interface Course {
-  id: string;
-  title: string;
-}
-
-export function QuizListTable() {
-  const router = useRouter();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+export function QuizListTable({
+  quizzes,
+  onEdit,
+  onDuplicate,
+  // onDelete,
+  onCreateNew,
+}: QuizListTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const fetchCourses = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`,
-        {
-          cache: "no-store",
-          credentials: "include",
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setCourses(data.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch courses:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
-
-  const fetchQuizzes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz`,
-        {
-          cache: "no-store",
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch quizzes");
-      }
-      const data = await response.json();
-      // Assuming data is array or data.data is array. User example: console.log(data)
-      // Usually it's data.data in this project based on other files
-      setQuizzes(Array.isArray(data) ? data : data.data || []);
-    } catch (error) {
-      console.error("Failed to load quizzes:", error);
-      // toast.error("Failed to load quizzes"); // Avoid toast on initial load if possible or use it
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchQuizzes();
-  }, [fetchQuizzes]);
 
   const filteredQuizzes = quizzes.filter((quiz) => {
-    const courseName =
-      quiz.courseName ||
-      courses.find((c) => c.id === quiz.courseId)?.title ||
-      "Unknown Course";
     const matchesSearch =
       quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      courseName.toLowerCase().includes(searchTerm.toLowerCase());
-    // status might not exist on API quiz object, so we treat it carefully
-    const quizStatus = quiz.status || "draft";
-    const matchesStatus = statusFilter === "all" || quizStatus === statusFilter;
+      quiz.courseName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || quiz.status === statusFilter;
     const matchesCourse =
       courseFilter === "all" || quiz.courseId === courseFilter;
     return matchesSearch && matchesStatus && matchesCourse;
@@ -158,53 +87,13 @@ export function QuizListTable() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!quizToDelete) return;
-
-    setIsDeleting(true);
-    showLoading("Deleting quiz...");
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${quizToDelete}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete quiz");
-      }
-      toast.dismiss();
-      router.refresh();
-      showSuccess({ message: "Quiz deleted successfully" });
-      setDeleteDialogOpen(false);
+  const confirmDelete = () => {
+    if (quizToDelete) {
+      // onDelete(quizToDelete);
       setQuizToDelete(null);
-      fetchQuizzes();
-    } catch (error) {
-      toast.dismiss();
-      router.refresh();
-      showError({
-        message:
-          error instanceof Error ? error.message : "Something went wrong",
-      });
-    } finally {
-      setIsDeleting(false);
     }
+    setDeleteDialogOpen(false);
   };
-
-  const onCreateNew = () => {
-    router.push("/dashboard/quiz/create");
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -241,7 +130,7 @@ export function QuizListTable() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Courses</SelectItem>
-              {courses.map((course) => (
+              {mockCourses.map((course) => (
                 <SelectItem key={course.id} value={course.id}>
                   {course.title}
                 </SelectItem>
@@ -250,12 +139,9 @@ export function QuizListTable() {
           </Select>
         </div>
         <Button onClick={onCreateNew} className="gap-2">
-          <Link
-            href={"/dashboard/quiz/create"}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create Quiz
+          <Link href={"/dashboard/quiz/create"} className="flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Create Quiz
           </Link>
         </Button>
       </motion.div>
@@ -293,12 +179,12 @@ export function QuizListTable() {
               </TableRow>
             ) : (
               filteredQuizzes.map((quiz, idx) => (
+                
                 <motion.tr
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 + idx * 0.1 }}
-                  key={quiz.id || idx}
-                >
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 + idx * 0.1 }}
+                key={idx}>
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">
@@ -311,15 +197,11 @@ export function QuizListTable() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-normal">
-                      {quiz.courseName ||
-                        courses.find((c) => c.id === quiz.courseId)?.title ||
-                        "Unknown"}
+                      {quiz.courseName}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="font-medium">
-                      {(quiz.questions || []).length}
-                    </span>
+                    <span className="font-medium">{quiz.questions.length}</span>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge
@@ -337,9 +219,7 @@ export function QuizListTable() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {quiz.updatedAt
-                        ? format(new Date(quiz.updatedAt), "MMM d, yyyy")
-                        : "-"}
+                      {format(new Date(quiz.updatedAt), "MMM d, yyyy")}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -350,19 +230,18 @@ export function QuizListTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/dashboard/quiz/update/${quiz.id}`}
-                            className="flex items-center cursor-pointer"
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Link>
+                        <DropdownMenuItem /* onClick={() => onEdit(quiz)} */>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem/*  onClick={() => onDuplicate(quiz)} */>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDeleteClick(quiz.id)}
-                          className="text-destructive focus:text-destructive cursor-pointer"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
