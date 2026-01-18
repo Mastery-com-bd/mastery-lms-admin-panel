@@ -33,7 +33,7 @@ export const login = async (data: TLogin) => {
       });
 
       cookieStore.set("accessToken", result.data.accessToken, {
-        maxAge: 60 * 60 * 24, // 1 day
+        maxAge: 60 * 60 * 24 * 1, // 1 day
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         path: "/",

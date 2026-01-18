@@ -23,7 +23,13 @@ export const getValidToken = async (): Promise<string> => {
   if (!token || (await isTokenExpired(token))) {
     const { data } = await getNewToken();
     token = data?.accessToken;
-    (await cookies()).set("accessToken", token);
+    cookieStore.set("accessToken", token, {
+      maxAge: 60 * 60 * 24 * 1, // 1 day
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
+    });
   }
   return token as string;
 };
