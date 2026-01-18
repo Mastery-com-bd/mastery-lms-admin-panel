@@ -20,9 +20,25 @@ export const login = async (data: TLogin) => {
       body: JSON.stringify(data),
     });
     const result = await res.json();
+
     if (result?.success) {
-      (await cookies()).set("refreshToken", result?.data?.refreshToken);
-      (await cookies()).set("accessToken", result?.data?.accessToken);
+      const cookieStore = await cookies();
+
+      cookieStore.set("refreshToken", result.data.refreshToken, {
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        sameSite: "lax",
+      });
+
+      cookieStore.set("accessToken", result.data.accessToken, {
+        maxAge: 60 * 60 * 24, // 1 day
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        sameSite: "lax",
+      });
     }
     return result;
   } catch (error: any) {
@@ -41,11 +57,6 @@ export const getCurrentUser = async () => {
   }
 };
 
-export const logout = async () => {
-  (await cookies()).delete("refreshToken");
-  (await cookies()).delete("accessToken");
-};
-
 export const getNewToken = async () => {
   try {
     const res = await fetch(
@@ -56,10 +67,26 @@ export const getNewToken = async () => {
           "Content-Type": "application/json",
           Authorization: (await cookies()).get("refreshToken")!.value,
         },
-      }
+      },
     );
     return res.json();
   } catch (error: any) {
     return Error(error);
+  }
+};
+
+export const logout = async (): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    (await cookies()).delete("refreshToken");
+    (await cookies()).delete("accessToken");
+    return { success: true, message: "Logout successful" };
+  } catch (error: any) {
+    // Still delete cookie even if backend call fails
+    (await cookies()).delete("authToken");
+    console.error("Logout error:", error);
+    return { success: true, message: "Logged out" };
   }
 };

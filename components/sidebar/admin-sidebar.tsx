@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import {
@@ -21,248 +22,41 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import {
-  BarChart3,
-  Bell,
-  BookOpen,
-  ChevronRight,
-  DotSquareIcon,
-  FileQuestion,
-  GraduationCap,
-  GripHorizontal,
-  Headset,
-  Layers,
-  LayoutDashboard,
-  LightbulbIcon,
-  Moon,
-  Settings,
-  Sun,
-  User,
-  Users,
-  Video,
-} from "lucide-react";
-import { useTheme } from "next-themes";
+import { navigation } from "@/const/navigation";
+import { ChevronRight, LayoutDashboard, LogOut, User } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { memo } from "react";
-
-const navigation = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-    isActive: true,
-  },
-  {
-    title: "Analytics",
-    url: "/dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Categories",
-    icon: Layers,
-    items: [
-      {
-        title: "All Categories",
-        url: "/dashboard/categories",
-      },
-      {
-        title: "Create Category",
-        url: "/dashboard/categories/create",
-      },
-    ],
-  },
-  {
-    title: "Courses",
-    icon: BookOpen,
-    items: [
-      {
-        title: "All Courses",
-        url: "/dashboard/courses",
-      },
-      {
-        title: "Create Course",
-        url: "/dashboard/courses/create",
-      },
-      {
-        title: "Course Reviews",
-        url: "/dashboard/courses/reviews",
-      },
-    ],
-  },
-  {
-    title: "Sections",
-    icon: GripHorizontal,
-    items: [
-      {
-        title: "All Sections",
-        url: "/dashboard/section",
-      },
-      {
-        title: "Create Section",
-        url: "/dashboard/section/create",
-      },
-    ],
-  },
-  {
-    title: "Lesson",
-    icon: DotSquareIcon,
-    items: [
-      {
-        title: "All Lessons",
-        url: "/dashboard/lesson",
-      },
-      {
-        title: "Create Lesson",
-        url: "/dashboard/lesson/create",
-      },
-    ],
-  },
-  {
-    title: "Quiz",
-    icon: LightbulbIcon,
-    items: [
-      {
-        title: "All Quizzes",
-        url: "/dashboard/quiz",
-      },
-      {
-        title: "Create Quiz",
-        url: "/dashboard/quiz/create",
-      },
-    ],
-  },
-  {
-    title: "Questions",
-    icon: FileQuestion,
-    items: [
-      {
-        title: "All Questions",
-        url: "/dashboard/questions",
-      },
-      {
-        title: "Create Question",
-        url: "/dashboard/questions/create",
-      },
-    ],
-  },
-  {
-    title: "Live Class",
-    icon: Video,
-    items: [
-      {
-        title: "All Live Classes",
-        url: "/dashboard/live-class",
-      },
-      {
-        title: "Create Live Class",
-        url: "/dashboard/live-class/create",
-      },
-    ],
-  },
-  {
-    title: "Supports",
-    icon: Headset,
-    items: [
-      {
-        title: "All Supports",
-        url: "/dashboard/supports",
-      },
-    ],
-  },
-  {
-    title: "Students",
-    icon: GraduationCap,
-    items: [
-      {
-        title: "All Students",
-        url: "/dashboard/students",
-      },
-      {
-        title: "Enrollments",
-        url: "/dashboard/students/enrollments",
-      },
-      {
-        title: "Progress",
-        url: "/dashboard/students/progress",
-      },
-    ],
-  },
-  {
-    title: "Instructors",
-    icon: User,
-    items: [
-      {
-        title: "All Instructors",
-        url: "/dashboard/instructors",
-      },
-      {
-        title: "Applications",
-        url: "/dashboard/instructors/applications",
-      },
-      {
-        title: "Payouts",
-        url: "/dashboard/instructors/payouts",
-      },
-    ],
-  },
-  {
-    title: "Users",
-    icon: Users,
-    items: [
-      {
-        title: "All Users",
-        url: "/dashboard/users",
-      },
-      {
-        title: "Roles & Permissions",
-        url: "/dashboard/users/roles",
-      },
-    ],
-  },
-  {
-    title: "Quiz & Assignments",
-    icon: LightbulbIcon,
-    items: [
-      {
-        title: "All Quizzes",
-        url: "/dashboard/quiz",
-      },
-      {
-        title: "Create Quiz",
-        url: "/dashboard/quiz/create",
-      },
-      {
-        title: "Assignments",
-        url: "/dashboard/assignments",
-      },
-    ],
-  },
-  {
-    title: "Supports",
-    url: "/dashboard/supports",
-    icon: Headset,
-  },
-  {
-    title: "Live Sessions",
-    url: "/dashboard/live",
-    icon: Video,
-  },
-  {
-    title: "Notifications",
-    url: "/dashboard/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
-];
+import ToggleButton from "../ui/ToggleButton";
+import { Button } from "../ui/button";
+import { useUser } from "@/provider/AuthContext";
+import { toast } from "sonner";
+import { logout } from "@/service/auth";
 
 export const AdminSidebar = memo(() => {
-  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const { setUser, setIsLoading } = useUser();
+  const router = useRouter();
+
+  const handleLogOut = async () => {
+    const toastId = toast.loading("Logging out...", { duration: 3000 });
+    try {
+      const res = await logout();
+      if (res.success) {
+        setIsLoading(true);
+        setUser(null);
+        toast.success(res.message, { id: toastId, duration: 3000 });
+        router.push("/login");
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("An error occurred during logout.", {
+        id: toastId,
+        duration: 3000,
+      });
+    }
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -296,7 +90,7 @@ export const AdminSidebar = memo(() => {
                       key={item.title}
                       asChild
                       defaultOpen={item.items.some((subItem) =>
-                        pathname.startsWith(subItem.url)
+                        pathname.startsWith(subItem.url as string),
                       )}
                       className="group/collapsible"
                     >
@@ -318,7 +112,7 @@ export const AdminSidebar = memo(() => {
                                   asChild
                                   isActive={pathname === subItem.url}
                                 >
-                                  <Link href={subItem.url}>
+                                  <Link href={subItem.url as string}>
                                     <span>{subItem.title}</span>
                                   </Link>
                                 </SidebarMenuSubButton>
@@ -354,13 +148,7 @@ export const AdminSidebar = memo(() => {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              tooltip={theme === "dark" ? "Light Mode" : "Dark Mode"}
-            >
-              {theme === "dark" ? <Sun /> : <Moon />}
-              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-            </SidebarMenuButton>
+            <ToggleButton />
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Admin Profile">
@@ -368,6 +156,18 @@ export const AdminSidebar = memo(() => {
                 <User />
                 <span>Admin Profile</span>
               </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Admin Profile">
+              <Button
+                variant="ghost"
+                onClick={handleLogOut}
+                className="cursor-pointer flex items-center justify-start gap-1 pl-1"
+              >
+                <LogOut />
+                <span>Logout</span>
+              </Button>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
