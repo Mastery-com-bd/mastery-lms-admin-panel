@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, logout } from "./service/auth";
-// import { getCurrentUser, logout } from "./service/auth";
 
 const authRoutes = ["/login"];
 
 const rolebasedPrivateUser = {
-  ADMIN: [/^\/dashboard$/],
+  ADMIN: [/^\/$/, /^\/dashboard$/],
 };
 
 type TRole = keyof typeof rolebasedPrivateUser;

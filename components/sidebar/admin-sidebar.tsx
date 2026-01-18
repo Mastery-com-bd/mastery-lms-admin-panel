@@ -49,7 +49,7 @@ import { memo } from "react";
 const navigation = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/",
     icon: LayoutDashboard,
     isActive: true,
   },
@@ -289,9 +289,7 @@ export const AdminSidebar = memo(() => {
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => {
-                const Icon = item.icon;
-
+              {navigation.map((item, i) => {
                 if (item.items) {
                   return (
                     <Collapsible
@@ -314,8 +312,8 @@ export const AdminSidebar = memo(() => {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {item.items.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.title}>
+                            {item.items.map((subItem, i) => (
+                              <SidebarMenuSubItem key={i}>
                                 <SidebarMenuSubButton
                                   asChild
                                   isActive={pathname === subItem.url}
@@ -334,7 +332,7 @@ export const AdminSidebar = memo(() => {
                 }
 
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={i}>
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === item.url}
