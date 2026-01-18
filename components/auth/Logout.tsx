@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 
-const Page = () => {
+const Logout = () => {
   const handleLogOut = async () => {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/logout`,
@@ -13,7 +13,6 @@ const Page = () => {
     );
     console.log(await response.json());
   };
-
   return (
     <div>
       <Button onClick={handleLogOut}>Log Out</Button>
@@ -21,4 +20,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default Logout;
