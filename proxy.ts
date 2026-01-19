@@ -1,28 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser, logout } from "./service/auth";
 
-export function proxy(req: NextRequest) {
-  /* const tokenCookie = req.cookies.get("accessToken"); // browser cookie name
-  const token = tokenCookie?.value;
-  const { pathname } = req.nextUrl;
+const authRoutes = ["/login"];
 
-  console.log("Request Path:", pathname);
-  console.log("Authentication Token:", token);
+const rolebasedPrivateUser = {
+  ADMIN: [/^\/$/, /^\/dashboard(\/.*)?$/],
+};
 
-  // Public routes (no auth needed)
-  const publicRoutes = ["/auth/login", "/auth/signup"];
+type TRole = keyof typeof rolebasedPrivateUser;
 
-  if (publicRoutes.includes(pathname)) {
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const userInfo = await getCurrentUser();
+  if (!userInfo) {
+    if (authRoutes.includes(pathname)) {
+      return NextResponse.next();
+    } else {
+      return NextResponse.redirect(
+        new URL(`/login?redirectPath=${pathname}`, request.url),
+      );
+    }
+  }
+  const role = userInfo?.role as TRole;
+  if (role && rolebasedPrivateUser[role]) {
+    const allowedRoutes = rolebasedPrivateUser[role];
+    const isAllowed = allowedRoutes.some((route) => {
+      const match = pathname.match(route);
+      return match !== null;
+    });
+    if (!isAllowed) {
+      await logout();
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
     return NextResponse.next();
+  } else {
+    await logout();
+    return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
- */
-  return NextResponse.next();
 }
 
-// Protect only specific routes
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/", "/dashboard", "/dashboard/(.*)"],
 };
