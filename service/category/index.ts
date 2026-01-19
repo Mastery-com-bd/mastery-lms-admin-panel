@@ -5,12 +5,14 @@ import { config } from "@/config";
 import { getValidToken } from "../auth/validToken";
 import { buildParams } from "@/utills/paramsBuilder";
 import { revalidateTag } from "next/cache";
+import { TCreateCategory } from "@/components/dashboard/category/create-category";
 type TQuery = {
   [key: string]: string | string[] | number | undefined;
 };
 
 export const getAllCategories = async (query?: TQuery) => {
   const token = await getValidToken();
+
   try {
     const res = await fetch(
       `${config.next_public_base_url}/category?${buildParams(query)}`,
@@ -39,6 +41,25 @@ export const deleteCategory = async (id: string) => {
       headers: {
         Authorization: token,
       },
+    });
+    const result = await res.json();
+    revalidateTag("Category", "default");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const createCategory = async (data: TCreateCategory) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(`${config.next_public_base_url}/category`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
     });
     const result = await res.json();
     revalidateTag("Category", "default");

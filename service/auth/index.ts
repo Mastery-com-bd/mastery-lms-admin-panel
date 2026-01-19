@@ -58,6 +58,9 @@ export const getCurrentUser = async () => {
 };
 
 export const getNewToken = async () => {
+  const cookieStore = await cookies();
+  const cookieToken = cookieStore.get("refreshToken");
+  const refreshToken = `Bearer ${cookieToken?.value as string}`;
   try {
     const res = await fetch(
       `${config.next_public_base_url}/auth/refresh-token`,
@@ -65,11 +68,12 @@ export const getNewToken = async () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: (await cookies()).get("refreshToken")!.value,
+          Authorization: refreshToken,
         },
       },
     );
-    return res.json();
+    const result = await res.json();
+    return result;
   } catch (error: any) {
     return Error(error);
   }
