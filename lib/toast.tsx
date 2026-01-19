@@ -2,15 +2,17 @@ import { toast } from "sonner";
 import { CheckCircle, TriangleAlert, Info, AlertCircle } from "lucide-react";
 
 export const showLoading = (message: string) => {
-  toast.loading(message);
+  return toast.loading(message, { duration: 3000 });
 };
 
 export const showError = ({
   message,
   duration = 3000,
+  id,
 }: {
   message: string;
   duration?: number;
+  id?: string | number;
 }) =>
   toast.error(message, {
     duration,
@@ -23,6 +25,7 @@ export const showError = ({
       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
       fontSize: "14px",
     },
+    id: id,
   });
 
 export const showSuccess = ({
@@ -51,9 +54,11 @@ export const showSuccess = ({
 export const showWarning = ({
   message,
   duration = 3000,
+  id,
 }: {
   message: string;
   duration?: number;
+  id: string | number;
 }) =>
   toast.warning(message, {
     duration,
@@ -66,6 +71,7 @@ export const showWarning = ({
       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
       fontSize: "14px",
     },
+    id: id,
   });
 
 export const showInfo = ({
