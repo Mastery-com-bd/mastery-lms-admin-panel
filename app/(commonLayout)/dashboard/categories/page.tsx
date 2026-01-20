@@ -1,7 +1,7 @@
 import AllCategory from "@/components/dashboard/category/all/all-category";
 import { getAllCategories } from "@/service/category";
 
-type TSearchParams = Promise<{
+export type TSearchParams = Promise<{
   [key: string]: string | string[] | number | undefined;
 }>;
 

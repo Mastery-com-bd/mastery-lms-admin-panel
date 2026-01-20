@@ -61,6 +61,7 @@ export const getNewToken = async () => {
   const cookieStore = await cookies();
   const cookieToken = cookieStore.get("refreshToken");
   const refreshToken = `Bearer ${cookieToken?.value as string}`;
+
   try {
     const res = await fetch(
       `${config.next_public_base_url}/auth/refresh-token`,
@@ -73,7 +74,8 @@ export const getNewToken = async () => {
       },
     );
     const result = await res.json();
-    return result;
+    const token = result?.data;
+    return token;
   } catch (error: any) {
     return Error(error);
   }

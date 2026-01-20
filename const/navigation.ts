@@ -96,6 +96,20 @@ export const navigation: TNavigation[] = [
     ],
   },
   {
+    title: "Books",
+    icon: BookOpen,
+    items: [
+      {
+        title: "All Books",
+        url: "/dashboard/books",
+      },
+      {
+        title: "Books Category",
+        url: "/dashboard/books/categories",
+      },
+    ],
+  },
+  {
     title: "Quiz",
     icon: LightbulbIcon,
     items: [
@@ -166,38 +180,6 @@ export const navigation: TNavigation[] = [
     ],
   },
   {
-    title: "Instructors",
-    icon: User,
-    items: [
-      {
-        title: "All Instructors",
-        url: "/dashboard/instructors",
-      },
-      {
-        title: "Applications",
-        url: "/dashboard/instructors/applications",
-      },
-      {
-        title: "Payouts",
-        url: "/dashboard/instructors/payouts",
-      },
-    ],
-  },
-  {
-    title: "Users",
-    icon: Users,
-    items: [
-      {
-        title: "All Users",
-        url: "/dashboard/users",
-      },
-      {
-        title: "Roles & Permissions",
-        url: "/dashboard/users/roles",
-      },
-    ],
-  },
-  {
     title: "Quiz & Assignments",
     icon: LightbulbIcon,
     items: [
@@ -209,10 +191,6 @@ export const navigation: TNavigation[] = [
         title: "Create Quiz",
         url: "/dashboard/quiz/create",
       },
-      {
-        title: "Assignments",
-        url: "/dashboard/assignments",
-      },
     ],
   },
   {
@@ -222,17 +200,7 @@ export const navigation: TNavigation[] = [
   },
   {
     title: "Live Sessions",
-    url: "/dashboard/live",
+    url: "/dashboard/live-class",
     icon: Video,
-  },
-  {
-    title: "Notifications",
-    url: "/dashboard/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
   },
 ];

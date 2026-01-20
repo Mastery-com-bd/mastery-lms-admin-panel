@@ -1,7 +1,6 @@
-"use client";
-
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { ChangeInput } from "../../category/all/CategoryFiltering";
 import {
   Select,
   SelectContent,
@@ -13,11 +12,7 @@ import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export type ChangeInput =
-  | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  | { name: string; value: string };
-
-const CategoryFiltering = () => {
+const BookCategoryFilter = () => {
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [isActive, setIsActive] = useState<string>("all");
@@ -46,7 +41,6 @@ const CategoryFiltering = () => {
     setSearchTerm("");
     setIsActive("");
   };
-
   return (
     <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b">
       <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
@@ -93,4 +87,4 @@ const CategoryFiltering = () => {
   );
 };
 
-export default CategoryFiltering;
+export default BookCategoryFilter;
