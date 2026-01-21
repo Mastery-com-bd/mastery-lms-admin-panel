@@ -13,5 +13,4 @@ export type TBooks = {
     name: string;
   };
   createdAt: string;
-  updatedAt: string;
 };

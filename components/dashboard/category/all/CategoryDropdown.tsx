@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,34 +10,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Dispatch, SetStateAction, useState } from "react";
-import { deleteCategory } from "@/service/category";
-import { toast } from "sonner";
 import DeleteComponent from "@/components/ui/DeleteComponent";
 
-const CategoryDropdown = ({ id }: { id: string }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleDelete = async (
+type TDropdownProps = {
+  id: string;
+  path?: string;
+  handleDelete: (
     id: string,
     setOpen: Dispatch<SetStateAction<boolean>>,
-  ) => {
-    setLoading(true);
-    const toastId = toast.loading("category deleting", { duration: 3000 });
-    try {
-      const result = await deleteCategory(id);
-      if (result?.success) {
-        toast.success(result?.message, { id: toastId, duration: 3000 });
-        setLoading(false);
-        setOpen(false);
-      } else {
-        toast.error(result?.message, { id: toastId, duration: 3000 });
-        setLoading(false);
-      }
-    } catch (error: any) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
+    setLoading: Dispatch<SetStateAction<boolean>>,
+  ) => Promise<void>;
+};
+
+const CategoryDropdown = ({ id, path, handleDelete }: TDropdownProps) => {
+  const [loading, setLoading] = useState(false);
 
   return (
     <DropdownMenu>
@@ -49,6 +34,12 @@ const CategoryDropdown = ({ id }: { id: string }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {path && (
+          <DropdownMenuItem asChild>
+            <Link href={path}>Details</Link>
+          </DropdownMenuItem>
+        )}
+
         <DropdownMenuItem asChild>
           <Link href={`/dashboard/categories/update?id=${id}`}>
             Edit category
@@ -59,7 +50,12 @@ const CategoryDropdown = ({ id }: { id: string }) => {
           className="text-red-600"
           onClick={(e) => e.preventDefault()}
         >
-          <DeleteComponent id={id} onDelete={handleDelete} loading={loading} />
+          <DeleteComponent
+            id={id}
+            onDelete={handleDelete}
+            loading={loading}
+            setLoading={setLoading}
+          />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

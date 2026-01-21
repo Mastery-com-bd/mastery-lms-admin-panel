@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Badge } from "@/components/ui/badge";
 import { TCategory } from "@/types/category.types";
@@ -5,6 +6,9 @@ import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
 import CategorySorting from "../../category/all/CategorySorting";
 import CategoryDropdown from "../../category/all/CategoryDropdown";
+import { Dispatch, SetStateAction } from "react";
+import { toast } from "sonner";
+import { deleteBookCategory } from "@/service/bookCategory";
 
 export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
   {
@@ -82,7 +86,33 @@ export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      return <CategoryDropdown id={id} />;
+
+      const handleDelete = async (
+        id: string,
+        setOpen: Dispatch<SetStateAction<boolean>>,
+        setLoading: Dispatch<SetStateAction<boolean>>,
+      ) => {
+        setLoading(true);
+        const toastId = toast.loading("book category deleting", {
+          duration: 3000,
+        });
+        try {
+          const result = await deleteBookCategory(id);
+          if (result?.success) {
+            toast.success(result?.message, { id: toastId, duration: 3000 });
+            setLoading(false);
+            setOpen(false);
+          } else {
+            toast.error(result?.message, { id: toastId, duration: 3000 });
+            setLoading(false);
+          }
+        } catch (error: any) {
+          console.log(error);
+          setLoading(false);
+        }
+      };
+
+      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
     },
   },
 ];

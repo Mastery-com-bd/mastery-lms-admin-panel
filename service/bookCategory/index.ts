@@ -9,15 +9,15 @@ import { buildParams } from "@/utills/paramsBuilder";
 import { TQuery } from "../category";
 
 export const getAllBookCategories = async (query?: TQuery) => {
-  // const token = await getValidToken();
+  const token = await getValidToken();
   try {
     const res = await fetch(
       `${config.next_public_base_url}/product-category?${buildParams(query)}`,
       {
         method: "GET",
-        // headers: {
-        //   Authorization: token,
-        // },
+        headers: {
+          Authorization: token,
+        },
         next: {
           tags: ["Product-category"],
         },
@@ -41,6 +41,26 @@ export const createBookCategory = async (data: TCreateCategory) => {
       },
       body: JSON.stringify(data),
     });
+    const result = await res.json();
+    revalidateTag("Product-category", "default");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const deleteBookCategory = async (id: string) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/product-category/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+        },
+      },
+    );
     const result = await res.json();
     revalidateTag("Product-category", "default");
     return result;

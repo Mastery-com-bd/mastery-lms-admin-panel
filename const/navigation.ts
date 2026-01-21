@@ -1,6 +1,6 @@
 import {
+  AlarmSmoke,
   BarChart3,
-  Bell,
   BookOpen,
   DotSquareIcon,
   FileQuestion,
@@ -11,9 +11,6 @@ import {
   LayoutDashboard,
   LightbulbIcon,
   LucideIcon,
-  Settings,
-  User,
-  Users,
   Video,
 } from "lucide-react";
 
@@ -106,6 +103,20 @@ export const navigation: TNavigation[] = [
       {
         title: "Books Category",
         url: "/dashboard/books/categories",
+      },
+    ],
+  },
+  {
+    title: "Learning & Requirment",
+    icon: AlarmSmoke,
+    items: [
+      {
+        title: "Course Learning",
+        url: "/dashboard/course-learning",
+      },
+      {
+        title: "Course Requirment",
+        url: "/dashboard/course-requirment",
       },
     ],
   },
