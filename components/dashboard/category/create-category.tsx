@@ -1,31 +1,32 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { createCategory } from "@/service/category";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -37,9 +38,9 @@ const formSchema = z.object({
   iconUrl: z.string().optional(),
 });
 
-export default function CreateCategory() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export type TCreateCategory = z.infer<typeof formSchema>;
 
+export default function CreateCategory() {
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,38 +52,18 @@ export default function CreateCategory() {
   });
 
   // 2. Define a submit handler.
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    showLoading("Creating category...");
+  async function onSubmit(values: TCreateCategory) {
+    const toastId = toast.loading("category creating", { duration: 3000 });
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/category`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Add Authorization header if needed, but usually handled by cookies/session
-          },
-          credentials: "include",
-          body: JSON.stringify(values),
-        }
-      );
-
-      console.log(values);
-      if (!response.ok) {
-        const error = await response.json();
-        console.log(error);
+      const result = await createCategory(values);
+      if (result?.success) {
+        toast.success(result?.message, { id: toastId, duration: 3000 });
+        form.reset();
+      } else {
+        toast.error(result?.message, { id: toastId, duration: 3000 });
       }
-
-      const data = await response.json();
-      showSuccess({ message: data.message });
-
-      form.reset();
-    } catch (error) {
-      console.error(error);
-      showError({ message: error instanceof Error ? error.message : "Something went wrong" });
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      console.log(error);
     }
   }
 
@@ -152,8 +133,12 @@ export default function CreateCategory() {
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && (
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="cursor-pointer"
+                >
+                  {form.formState.isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Create Category
