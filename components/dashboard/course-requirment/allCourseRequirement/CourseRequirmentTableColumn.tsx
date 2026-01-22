@@ -7,10 +7,14 @@ import CategorySorting from "../../category/all/CategorySorting";
 import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { TCourseLearning } from "@/types/courseLearning.types";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 import { deleteCourseRequirment } from "@/service/courseRequirment";
+import CreateAllCourseRequirment from "./CreateAllCourseRequirment";
+import { TCourse } from "@/types/course.types";
 
-export const courseRequirmentTableColumn = (): ColumnDef<TCourseLearning>[] => [
+export const courseRequirmentTableColumn = (
+  course: TCourse[],
+): ColumnDef<TCourseLearningData>[] => [
   {
     id: "course",
     header: "Course",
@@ -86,6 +90,7 @@ export const courseRequirmentTableColumn = (): ColumnDef<TCourseLearning>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
+      const courseRequirment = row.original;
 
       const handleDelete = async (
         id: string,
@@ -112,7 +117,14 @@ export const courseRequirmentTableColumn = (): ColumnDef<TCourseLearning>[] => [
         }
       };
 
-      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
+      return (
+        <CategoryDropdown id={id} handleDelete={handleDelete}>
+          <CreateAllCourseRequirment
+            course={course}
+            courseRequirment={courseRequirment}
+          />
+        </CategoryDropdown>
+      );
     },
   },
 ];

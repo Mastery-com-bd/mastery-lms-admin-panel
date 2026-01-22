@@ -1,4 +1,4 @@
-export type TCourseLearning = {
+export type TCourseLearningData = {
   content: string;
   course: {
     id: string;

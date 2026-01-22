@@ -6,7 +6,7 @@ import { TQuery } from "../category";
 import { buildParams } from "@/utills/paramsBuilder";
 import { TCreateCourseLearning } from "../courseLearning";
 import { getValidToken } from "../auth/validToken";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export const getAllCourseRequirment = async (query?: TQuery) => {
   try {
@@ -17,6 +17,7 @@ export const getAllCourseRequirment = async (query?: TQuery) => {
 
         next: {
           tags: ["Course-requirment"],
+          revalidate: 30,
         },
       },
     );
@@ -44,6 +45,34 @@ export const createCourseRequirment = async (data: TCreateCourseLearning) => {
     );
     const result = await res.json();
     revalidateTag("Course-requirment", "default");
+    revalidatePath("/dashboard/course-requirment");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const updateCourseRequirment = async (
+  data: TCreateCourseLearning,
+  id: string,
+) => {
+  console.log(data);
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/course-requirement/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+    const result = await res.json();
+    revalidateTag("Course-requirment", "default");
+    revalidatePath("/dashboard/course-requirment");
     return result;
   } catch (error: any) {
     return Error(error);
@@ -64,6 +93,7 @@ export const deleteCourseRequirment = async (id: string) => {
     );
     const result = await res.json();
     revalidateTag("Course-requirment", "default");
+    revalidatePath("/dashboard/course-requirment");
     return result;
   } catch (error: any) {
     return Error(error);

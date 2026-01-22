@@ -99,7 +99,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
       sku: book?.sku?.replace(/^Book-/, "") ?? undefined,
       stock: book?.stock.toString() ?? undefined,
       productStatus: book?.productStatus ?? undefined,
-      productCategoryId: book?.productCategoryId,
+      productCategoryId: book?.productCategoryId ?? undefined,
     },
   });
 

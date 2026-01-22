@@ -8,12 +8,12 @@ import CustomPagination from "@/components/ui/CustomPagination";
 import AllCourseRequirmentFiltering from "./AllCourseRequirmentFiltering";
 import { courseRequirmentTableColumn } from "./CourseRequirmentTableColumn";
 import CustomTable from "@/components/ui/CustomTable";
-import { TCourseLearning } from "@/types/courseLearning.types";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 
 type TAllCourseRequirmentProps = {
   course: TCourse[];
   meta: TMeta;
-  courseRequirment: TCourseLearning[];
+  courseRequirment: TCourseLearningData[];
 };
 
 const AllCourseRequirment = ({
@@ -21,7 +21,7 @@ const AllCourseRequirment = ({
   meta,
   courseRequirment,
 }: TAllCourseRequirmentProps) => {
-  const columns = courseRequirmentTableColumn();
+  const columns = courseRequirmentTableColumn(course);
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

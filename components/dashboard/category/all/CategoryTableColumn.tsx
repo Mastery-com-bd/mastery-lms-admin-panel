@@ -9,6 +9,7 @@ import CategorySorting from "./CategorySorting";
 import { Dispatch, SetStateAction } from "react";
 import { deleteCategory } from "@/service/category";
 import { toast } from "sonner";
+import CreateCategory from "./CreateCategory";
 
 export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
   {
@@ -86,7 +87,7 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-
+      const category = row.original;
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
@@ -110,7 +111,11 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
         }
       };
 
-      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
+      return (
+        <CategoryDropdown id={id} handleDelete={handleDelete}>
+          <CreateCategory category={category} />
+        </CategoryDropdown>
+      );
     },
   },
 ];

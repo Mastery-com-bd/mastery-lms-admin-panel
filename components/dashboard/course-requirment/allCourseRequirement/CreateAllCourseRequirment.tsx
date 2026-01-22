@@ -33,9 +33,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createCourseRequirment } from "@/service/courseRequirment";
+import {
+  createCourseRequirment,
+  updateCourseRequirment,
+} from "@/service/courseRequirment";
 import { TCourseLearning } from "../../course-learning/allCourseLearning/CreateCourseLearning";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 
 export const formSchema = z.object({
   courseId: z.string({
@@ -57,10 +61,21 @@ export const formSchema = z.object({
     }),
 });
 
-const CreateAllCourseRequirment = ({ course }: { course: TCourse[] }) => {
+const CreateAllCourseRequirment = ({
+  course,
+  courseRequirment,
+}: {
+  course: TCourse[];
+  courseRequirment?: TCourseLearningData;
+}) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      courseId: courseRequirment?.course?.id ?? undefined,
+      content: courseRequirment?.content ?? undefined,
+      order: courseRequirment?.order.toString() ?? undefined,
+    },
   });
 
   const onSubmit = async (data: TCourseLearning) => {
@@ -72,7 +87,13 @@ const CreateAllCourseRequirment = ({ course }: { course: TCourse[] }) => {
       order: Number(data.order),
     };
     try {
-      const result = await createCourseRequirment(payload);
+      let result;
+      if (courseRequirment) {
+        result = await updateCourseRequirment(payload, courseRequirment?.id);
+      } else {
+        result = await createCourseRequirment(payload);
+      }
+
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
         form.reset();
@@ -96,7 +117,16 @@ const CreateAllCourseRequirment = ({ course }: { course: TCourse[] }) => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Create Course Requirment</Button>
+        {courseRequirment ? (
+          <Button
+            variant="secondary"
+            className="cursor-pointer bg-transparent p-2 "
+          >
+            Update
+          </Button>
+        ) : (
+          <Button className="cursor-pointer">Create Course Requirement</Button>
+        )}
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}

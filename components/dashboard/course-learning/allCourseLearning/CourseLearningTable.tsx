@@ -7,10 +7,14 @@ import CategorySorting from "../../category/all/CategorySorting";
 import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { TCourseLearning } from "@/types/courseLearning.types";
 import { deleteCourseLearning } from "@/service/courseLearning";
+import CreateCourseLearning from "./CreateCourseLearning";
+import { TCourse } from "@/types/course.types";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 
-export const courseLearningTableColumn = (): ColumnDef<TCourseLearning>[] => [
+export const courseLearningTableColumn = (
+  course: TCourse[],
+): ColumnDef<TCourseLearningData>[] => [
   {
     id: "course",
     header: "Course",
@@ -86,7 +90,7 @@ export const courseLearningTableColumn = (): ColumnDef<TCourseLearning>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-
+      const courseLearning = row.original;
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
@@ -112,7 +116,14 @@ export const courseLearningTableColumn = (): ColumnDef<TCourseLearning>[] => [
         }
       };
 
-      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
+      return (
+        <CategoryDropdown id={id} handleDelete={handleDelete}>
+          <CreateCourseLearning
+            course={course}
+            courseLearning={courseLearning}
+          />
+        </CategoryDropdown>
+      );
     },
   },
 ];

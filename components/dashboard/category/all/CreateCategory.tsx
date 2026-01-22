@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import { createBookCategory, updateBookCategory } from "@/service/bookCategory";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TCreateCategory } from "../../category/all/CreateCategory";
+import { createCategory, updateCategory } from "@/service/category";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -48,27 +47,28 @@ const formSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-const CreateCategory = ({ bookCategory }: { bookCategory?: TCategory }) => {
+export type TCreateCategory = z.infer<typeof formSchema>;
+const CreateCategory = ({ category }: { category?: TCategory }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: bookCategory?.name ?? undefined,
-      description: bookCategory?.description ?? undefined,
-      iconUrl: bookCategory?.iconUrl ?? undefined,
-      isActive: bookCategory?.isActive ?? undefined,
+      name: category?.name ?? undefined,
+      description: category?.description ?? undefined,
+      iconUrl: category?.iconUrl ?? undefined,
+      isActive: category?.isActive ?? undefined,
     },
   });
 
   // 2. Define a submit handler.
-  async function onSubmit(values: TCreateCategory) {
+  const onSubmit = async (values: TCreateCategory) => {
     const toastId = toast.loading("book category creating", { duration: 3000 });
     try {
       let result;
-      if (bookCategory) {
-        result = await updateBookCategory(values, bookCategory?.id);
+      if (category) {
+        result = await updateCategory(values, category?.id);
       } else {
-        result = await createBookCategory(values);
+        result = await createCategory(values);
       }
 
       if (result?.success) {
@@ -81,7 +81,7 @@ const CreateCategory = ({ bookCategory }: { bookCategory?: TCategory }) => {
     } catch (error: any) {
       console.log(error);
     }
-  }
+  };
 
   return (
     <Dialog
@@ -94,7 +94,7 @@ const CreateCategory = ({ bookCategory }: { bookCategory?: TCategory }) => {
       }}
     >
       <DialogTrigger asChild>
-        {bookCategory ? (
+        {category ? (
           <Button
             variant="secondary"
             className="cursor-pointer bg-transparent p-2 "

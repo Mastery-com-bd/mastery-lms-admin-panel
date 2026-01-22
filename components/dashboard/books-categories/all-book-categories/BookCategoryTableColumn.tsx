@@ -9,6 +9,7 @@ import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { deleteBookCategory } from "@/service/bookCategory";
+import CreateCategory from "./CreateCategory";
 
 export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
   {
@@ -86,7 +87,7 @@ export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-
+      const bookCategory = row.original;
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
@@ -112,7 +113,11 @@ export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
         }
       };
 
-      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
+      return (
+        <CategoryDropdown id={id} handleDelete={handleDelete}>
+          <CreateCategory bookCategory={bookCategory} />
+        </CategoryDropdown>
+      );
     },
   },
 ];

@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createCourseLearning } from "@/service/courseLearning";
+import {
+  createCourseLearning,
+  updateourseLearning,
+} from "@/service/courseLearning";
 import { TCourse } from "@/types/course.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -35,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 
 export const formSchema = z.object({
   courseId: z.string({
@@ -58,10 +62,21 @@ export const formSchema = z.object({
 
 export type TCourseLearning = z.infer<typeof formSchema>;
 
-const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
+const CreateCourseLearning = ({
+  course,
+  courseLearning,
+}: {
+  course: TCourse[];
+  courseLearning?: TCourseLearningData;
+}) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      courseId: courseLearning?.course?.id ?? undefined,
+      content: courseLearning?.content ?? undefined,
+      order: courseLearning?.order.toString() ?? undefined,
+    },
   });
 
   const onSubmit = async (data: TCourseLearning) => {
@@ -73,7 +88,13 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
       order: Number(data.order),
     };
     try {
-      const result = await createCourseLearning(payload);
+      let result;
+      if (courseLearning) {
+        result = await updateourseLearning(payload, courseLearning?.id);
+      } else {
+        result = await createCourseLearning(payload);
+      }
+
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
         form.reset();
@@ -96,7 +117,16 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Create Course Learning</Button>
+        {courseLearning ? (
+          <Button
+            variant="secondary"
+            className="cursor-pointer bg-transparent p-2 "
+          >
+            Update
+          </Button>
+        ) : (
+          <Button className="cursor-pointer">Create Course Learning</Button>
+        )}
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}

@@ -44,6 +44,7 @@ const BooksFiltering = () => {
     setSearchTerm("");
     setStatus("");
   };
+
   return (
     <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b">
       <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
@@ -75,7 +76,7 @@ const BooksFiltering = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            {["PUBLISHED", "DRAFT", "ARCHIVED"].map((item, i) => {
+            {["PUBLISHED", "DRAFT", "DISCONTINUED"].map((item, i) => {
               const formatted =
                 item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
               return (

@@ -9,6 +9,7 @@ export type TBooks = {
   productStatus: "PUBLISHED" | "DRAFT" | "DISCONTINUED";
   productImage: string;
   productCategoryId: string;
+  orderItems?: [];
   productCategory: {
     id: string;
     name: string;

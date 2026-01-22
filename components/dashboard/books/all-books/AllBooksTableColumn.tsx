@@ -131,7 +131,6 @@ export const bookTableColumn = (
     id: "action",
     header: "Action",
     cell: ({ row }) => {
-      console.log(row.original);
       const id = row.original?.id;
       const book = row.original;
       const handleDelete = async (
@@ -159,7 +158,7 @@ export const bookTableColumn = (
       return (
         <CategoryDropdown
           id={id}
-          path={`dashboard/books/${id}`}
+          path={`/dashboard/books/${id}`}
           handleDelete={handleDelete}
         >
           <CreateBook
