@@ -22,6 +22,7 @@ const AllCourseRequirment = ({
   courseRequirment,
 }: TAllCourseRequirmentProps) => {
   const columns = courseRequirmentTableColumn(course);
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

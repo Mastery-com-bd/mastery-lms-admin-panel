@@ -118,7 +118,11 @@ export const courseRequirmentTableColumn = (
       };
 
       return (
-        <CategoryDropdown id={id} handleDelete={handleDelete}>
+        <CategoryDropdown
+          id={id}
+          handleDelete={handleDelete}
+          path={`/dashboard/course-requirment/${id}`}
+        >
           <CreateAllCourseRequirment
             course={course}
             courseRequirment={courseRequirment}

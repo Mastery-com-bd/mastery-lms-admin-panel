@@ -32,6 +32,26 @@ export const getAllCourseLearning = async (query?: TQuery) => {
   }
 };
 
+export const getASingleCourseLearning = async (id: string) => {
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/course-learning/${id}`,
+      {
+        method: "GET",
+
+        next: {
+          tags: ["Course-learning"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
 export const createCourseLearning = async (data: TCreateCourseLearning) => {
   console.log(data);
   const token = await getValidToken();

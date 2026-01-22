@@ -91,6 +91,7 @@ export const courseLearningTableColumn = (
     cell: ({ row }) => {
       const id = row.original?.id;
       const courseLearning = row.original;
+
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
@@ -117,7 +118,11 @@ export const courseLearningTableColumn = (
       };
 
       return (
-        <CategoryDropdown id={id} handleDelete={handleDelete}>
+        <CategoryDropdown
+          id={id}
+          handleDelete={handleDelete}
+          path={`/dashboard/course-learning/${id}`}
+        >
           <CreateCourseLearning
             course={course}
             courseLearning={courseLearning}
