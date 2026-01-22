@@ -77,7 +77,7 @@ const CreateCategory = () => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Create Category</Button>
+        <Button className="cursor-pointer">Create Book Category</Button>
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}

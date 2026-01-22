@@ -12,6 +12,7 @@ const AllBooksPage = async ({
   const books = result?.data?.products?.data || [];
   const meta = result?.data?.products?.meta;
   const categories = result?.data?.categories?.data || [];
+
   return (
     <section>
       <AllBooks books={books} categories={categories} meta={meta} />

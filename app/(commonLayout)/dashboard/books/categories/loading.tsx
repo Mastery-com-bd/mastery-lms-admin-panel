@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import GlobalTableSkeleton from "@/components/ui/TableSkeleton";
 
-const TableSkeleton = () => {
+const BookCategoryLoadingSkeleton = () => {
   return (
     <div className="px-10 py-6 space-y-4">
       <div className="w-full md:w-40">
@@ -26,10 +26,10 @@ const TableSkeleton = () => {
           {/* Filter Button */}
           <Skeleton className="h-10 w-10 rounded-md" />
         </div>
-        <GlobalTableSkeleton row={10} column={6} />
+        <GlobalTableSkeleton row={10} column={5} />
       </Card>
     </div>
   );
 };
 
-export default TableSkeleton;
+export default BookCategoryLoadingSkeleton;

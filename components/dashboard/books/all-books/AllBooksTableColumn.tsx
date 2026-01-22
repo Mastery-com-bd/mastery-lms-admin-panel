@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Badge } from "@/components/ui/badge";
-import { TCategory } from "@/types/category.types";
 import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
-import CategoryDropdown from "./CategoryDropdown";
-import CategorySorting from "./CategorySorting";
+import CategorySorting from "../../category/all/CategorySorting";
+import CategoryDropdown from "../../category/all/CategoryDropdown";
+import { TBooks } from "@/types/product.types";
+import Image from "next/image";
 import { Dispatch, SetStateAction } from "react";
-import { deleteCategory } from "@/service/category";
 import { toast } from "sonner";
+import { deleteBooks } from "@/service/books";
 
-export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
+export const bookTableColumn = (): ColumnDef<TBooks>[] => [
   {
     id: "name",
     header: () => (
@@ -21,8 +22,16 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     cell: ({ row }) => {
       const name = row.original?.name;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
+      const image = row.original?.productImage;
       return (
-        <div className="relative group inline-block">
+        <div className="relative group flex items-center gap-2">
+          <Image
+            src={image}
+            height={50}
+            width={50}
+            alt={name}
+            className="h-10 w-10 rounded-full"
+          />
           <h1>{trimedName}</h1>
           <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
             {name}
@@ -48,18 +57,51 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    id: "category",
+    header: "Category",
     cell: ({ row }) => {
-      const status = row.original?.isActive;
+      const category = row.original?.productCategory?.name;
+      const trimmedCategory =
+        category.length > 50 ? category.slice(0, 20) + "..." : category;
       return (
-        <Badge variant={status ? "default" : "secondary"}>
-          {status ? "Active" : "Inactive"}
-        </Badge>
+        <div className="relative group inline-block">
+          <h1>{trimmedCategory}</h1>
+          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
+            {category}
+          </p>
+        </div>
       );
     },
   },
 
+  {
+    accessorKey: "price",
+    header: () => (
+      <div className="flex items-center gap-1">
+        <CategorySorting name="Price" sort="price" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const price = row.original.price;
+      return <h1 className="flex flex-col items-start">{price} TK</h1>;
+    },
+  },
+  {
+    accessorKey: "sku",
+    header: "Sku",
+  },
+  {
+    accessorKey: "stock",
+    header: "Stock",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original?.productStatus;
+      return <Badge variant={status ? "default" : "secondary"}>{status}</Badge>;
+    },
+  },
   {
     accessorKey: "createdAt",
     header: () => (
@@ -86,16 +128,15 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
       ) => {
         setLoading(true);
-        const toastId = toast.loading("category deleting", { duration: 3000 });
+        const toastId = toast.loading("book deleting", { duration: 3000 });
         try {
-          const result = await deleteCategory(id);
+          const result = await deleteBooks(id);
           if (result?.success) {
             toast.success(result?.message, { id: toastId, duration: 3000 });
             setLoading(false);
@@ -109,8 +150,13 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
           setLoading(false);
         }
       };
-
-      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
+      return (
+        <CategoryDropdown
+          id={id}
+          path={`dashboard/books/${id}`}
+          handleDelete={handleDelete}
+        />
+      );
     },
   },
 ];

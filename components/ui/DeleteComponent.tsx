@@ -16,12 +16,19 @@ type TDeleteProps = {
   onDelete: (
     id: string,
     setOpen: Dispatch<SetStateAction<boolean>>,
+    setLoading: Dispatch<SetStateAction<boolean>>,
   ) => Promise<void>;
   id: string;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 };
 
-const DeleteComponent = ({ onDelete, id, loading }: TDeleteProps) => {
+const DeleteComponent = ({
+  onDelete,
+  id,
+  loading,
+  setLoading,
+}: TDeleteProps) => {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -46,7 +53,7 @@ const DeleteComponent = ({ onDelete, id, loading }: TDeleteProps) => {
             variant="destructive"
             disabled={loading}
             onClick={() => {
-              onDelete(id, setOpen);
+              onDelete(id, setOpen, setLoading);
             }}
             className="cursor-pointer"
           >
