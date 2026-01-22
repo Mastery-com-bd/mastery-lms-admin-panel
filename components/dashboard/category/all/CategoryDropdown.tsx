@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, ReactNode, SetStateAction, useState } from "react";
 import DeleteComponent from "@/components/ui/DeleteComponent";
 
 type TDropdownProps = {
@@ -20,9 +20,15 @@ type TDropdownProps = {
     setOpen: Dispatch<SetStateAction<boolean>>,
     setLoading: Dispatch<SetStateAction<boolean>>,
   ) => Promise<void>;
+  children: ReactNode;
 };
 
-const CategoryDropdown = ({ id, path, handleDelete }: TDropdownProps) => {
+const CategoryDropdown = ({
+  id,
+  path,
+  handleDelete,
+  children,
+}: TDropdownProps) => {
   const [loading, setLoading] = useState(false);
 
   return (
@@ -36,15 +42,13 @@ const CategoryDropdown = ({ id, path, handleDelete }: TDropdownProps) => {
       <DropdownMenuContent align="end">
         {path && (
           <DropdownMenuItem asChild>
-            <Link href={path}>Details</Link>
+            <Link href={path} className="cursor-pointer">
+              Details
+            </Link>
           </DropdownMenuItem>
         )}
 
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/categories/update?id=${id}`}>
-            Edit category
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem asChild>{children}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-red-600"

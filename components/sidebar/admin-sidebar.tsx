@@ -132,7 +132,7 @@ export const AdminSidebar = memo(() => {
                       isActive={pathname === item.url}
                       tooltip={item.title}
                     >
-                      <Link href={item.url || "#"}>
+                      <Link href={item.url as string}>
                         {item.icon && <item.icon className="h-4 w-4" />}
                         <span>{item.title}</span>
                       </Link>

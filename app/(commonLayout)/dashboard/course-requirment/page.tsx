@@ -17,7 +17,11 @@ const CourseRequirmentPage = async ({
 
   return (
     <section>
-      <AllCourseRequirment course={course} meta={meta} />
+      <AllCourseRequirment
+        course={course}
+        meta={meta}
+        courseRequirment={courseRequirment}
+      />
     </section>
   );
 };

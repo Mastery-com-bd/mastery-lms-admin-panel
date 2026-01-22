@@ -5,37 +5,20 @@ import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
 import CategorySorting from "../../category/all/CategorySorting";
 import CategoryDropdown from "../../category/all/CategoryDropdown";
-import { TBooks } from "@/types/product.types";
-import Image from "next/image";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { deleteBooks } from "@/service/books";
-import CreateBook from "./CreateBook";
-import { TCategory } from "@/types/category.types";
+import { TCourseLearning } from "@/types/courseLearning.types";
+import { deleteCourseLearning } from "@/service/courseLearning";
 
-export const bookTableColumn = (
-  categories: TCategory[],
-): ColumnDef<TBooks>[] => [
+export const courseLearningTableColumn = (): ColumnDef<TCourseLearning>[] => [
   {
-    id: "name",
-    header: () => (
-      <div className="flex items-center gap-1">
-        <CategorySorting name="Name" sort="name" />
-      </div>
-    ),
+    id: "course",
+    header: "Course",
     cell: ({ row }) => {
-      const name = row.original?.name;
+      const name = row.original?.course?.title;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
-      const image = row.original?.productImage;
       return (
-        <div className="relative group flex items-center gap-2">
-          <Image
-            src={image}
-            height={50}
-            width={50}
-            alt={name}
-            className="h-10 w-10 rounded-full"
-          />
+        <div className="relative group inline-block">
           <h1>{trimedName}</h1>
           <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
             {name}
@@ -48,7 +31,7 @@ export const bookTableColumn = (
     id: "description",
     header: "Description",
     cell: ({ row }) => {
-      const name = row.original?.description;
+      const name = row.original?.content;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
       return (
         <div className="relative group inline-block">
@@ -61,51 +44,22 @@ export const bookTableColumn = (
     },
   },
   {
-    id: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original?.productCategory?.name;
-      const trimmedCategory =
-        category.length > 50 ? category.slice(0, 20) + "..." : category;
-      return (
-        <div className="relative group inline-block">
-          <h1>{trimmedCategory}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {category}
-          </p>
-        </div>
-      );
-    },
-  },
-
-  {
-    accessorKey: "price",
-    header: () => (
-      <div className="flex items-center gap-1">
-        <CategorySorting name="Price" sort="price" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const price = row.original.price;
-      return <h1 className="flex flex-col items-start">{price} TK</h1>;
-    },
-  },
-  {
-    accessorKey: "sku",
-    header: "Sku",
-  },
-  {
-    accessorKey: "stock",
-    header: "Stock",
-  },
-  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original?.productStatus;
-      return <Badge variant={status ? "default" : "secondary"}>{status}</Badge>;
+      const status = row.original?.isActive;
+      return (
+        <Badge variant={status ? "default" : "secondary"}>
+          {status ? "Active" : "Inactive"}
+        </Badge>
+      );
     },
   },
+  {
+    accessorKey: "order",
+    header: "Order",
+  },
+
   {
     accessorKey: "createdAt",
     header: () => (
@@ -131,18 +85,19 @@ export const bookTableColumn = (
     id: "action",
     header: "Action",
     cell: ({ row }) => {
-      console.log(row.original);
       const id = row.original?.id;
-      const book = row.original;
+
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
       ) => {
         setLoading(true);
-        const toastId = toast.loading("book deleting", { duration: 3000 });
+        const toastId = toast.loading("course learning deleting", {
+          duration: 3000,
+        });
         try {
-          const result = await deleteBooks(id);
+          const result = await deleteCourseLearning(id);
           if (result?.success) {
             toast.success(result?.message, { id: toastId, duration: 3000 });
             setLoading(false);
@@ -156,19 +111,8 @@ export const bookTableColumn = (
           setLoading(false);
         }
       };
-      return (
-        <CategoryDropdown
-          id={id}
-          path={`dashboard/books/${id}`}
-          handleDelete={handleDelete}
-        >
-          <CreateBook
-            categories={categories}
-            book={book as TBooks}
-            type="update"
-          />
-        </CategoryDropdown>
-      );
+
+      return <CategoryDropdown id={id} handleDelete={handleDelete} />;
     },
   },
 ];

@@ -47,6 +47,24 @@ export const createBook = async (data: FormData) => {
   }
 };
 
+export const updateBook = async (data: FormData, id: string) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(`${config.next_public_base_url}/product/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: token,
+      },
+      body: data,
+    });
+    const result = await res.json();
+    revalidateTag("Product", "default");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
 export const deleteBooks = async (id: string) => {
   const token = await getValidToken();
   try {

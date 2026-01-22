@@ -13,7 +13,7 @@ import BooksFiltering from "./BooksFiltering";
 type TAllBooksProps = { books: TBooks[]; meta: TMeta; categories: TCategory[] };
 
 const AllBooks = ({ books, meta, categories }: TAllBooksProps) => {
-  const columns = bookTableColumn();
+  const columns = bookTableColumn(categories);
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

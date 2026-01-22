@@ -36,8 +36,7 @@ import {
 import { TCategory } from "@/types/category.types";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { createBook, updateBook } from "@/service/books";
-import { TBooks } from "@/types/product.types";
+import { createBook } from "@/service/books";
 
 const formSchema = z.object({
   name: z
@@ -76,31 +75,20 @@ const formSchema = z.object({
   }),
 });
 
-type TBook = z.infer<typeof formSchema>;
+type TBooks = z.infer<typeof formSchema>;
 
-type TCreateBookProps = {
+const UpdateBook = ({
+  categories,
+  book,
+}: {
   categories: TCategory[];
-  book?: TBooks;
-  type?: "update";
-};
-
-const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
+  book: TBooks;
+}) => {
   const [open, setOpen] = useState(false);
   const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(
-    book?.productImage || null,
-  );
+  const [preview, setPreview] = useState<string | null>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: book?.name ?? undefined,
-      description: book?.description ?? undefined,
-      price: book?.price.toString() ?? undefined,
-      sku: book?.sku?.replace(/^Book-/, "") ?? undefined,
-      stock: book?.stock.toString() ?? undefined,
-      productStatus: book?.productStatus ?? undefined,
-      productCategoryId: book?.productCategoryId,
-    },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +110,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
     if (input) input.value = "";
   };
 
-  const onSubmit = async (data: TBook) => {
+  const onSubmit = async (data: TBooks) => {
     const formData = new FormData();
     const toastId = toast.loading("book creating", { duration: 3000 });
     if (!image) {
@@ -142,12 +130,8 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
     });
     formData.append("productImage", image);
     try {
-      let result;
-      if (type === "update") {
-        result = await updateBook(formData, book?.id as string);
-      } else {
-        result = await createBook(formData);
-      }
+      const result = await createBook(formData);
+      console.log(result);
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
         form.reset();
@@ -173,16 +157,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
       }}
     >
       <DialogTrigger asChild>
-        {type ? (
-          <Button
-            variant="secondary"
-            className="cursor-pointer bg-transparent p-2 "
-          >
-            Update Book
-          </Button>
-        ) : (
-          <Button className="cursor-pointer">Create Book</Button>
-        )}
+        <Button className="cursor-pointer">Create Book</Button>
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}
@@ -389,4 +364,4 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
   );
 };
 
-export default CreateBook;
+export default UpdateBook;

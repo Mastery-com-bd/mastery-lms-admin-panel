@@ -51,3 +51,23 @@ export const createCourseLearning = async (data: TCreateCourseLearning) => {
     return Error(error);
   }
 };
+
+export const deleteCourseLearning = async (id: string) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/course-learning/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+        },
+      },
+    );
+    const result = await res.json();
+    revalidateTag("Course-learning", "default");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};

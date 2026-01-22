@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createCourseLearning } from "@/service/courseLearning";
 import { TCourse } from "@/types/course.types";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -34,6 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createCourseRequirment } from "@/service/courseRequirment";
+import { TCourseLearning } from "../../course-learning/allCourseLearning/CreateCourseLearning";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 
 export const formSchema = z.object({
@@ -56,16 +57,14 @@ export const formSchema = z.object({
     }),
 });
 
-export type TCourseLearning = z.infer<typeof formSchema>;
-
-const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
+const CreateAllCourseRequirment = ({ course }: { course: TCourse[] }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
   const onSubmit = async (data: TCourseLearning) => {
-    const toastId = toast.loading("course learning creating", {
+    const toastId = toast.loading("course requirment creating", {
       duration: 3000,
     });
     const payload = {
@@ -73,7 +72,7 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
       order: Number(data.order),
     };
     try {
-      const result = await createCourseLearning(payload);
+      const result = await createCourseRequirment(payload);
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
         form.reset();
@@ -85,6 +84,7 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
       console.log(error);
     }
   };
+
   return (
     <Dialog
       open={open}
@@ -96,15 +96,16 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Create Course Learning</Button>
+        <Button className="cursor-pointer">Create Course Requirment</Button>
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Course Learning</DialogTitle>
+          <DialogTitle>Course Requirment</DialogTitle>
           <DialogDescription>Add a course learning outline.</DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
@@ -186,4 +187,4 @@ const CreateCourseLearning = ({ course }: { course: TCourse[] }) => {
   );
 };
 
-export default CreateCourseLearning;
+export default CreateAllCourseRequirment;
