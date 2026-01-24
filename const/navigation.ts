@@ -34,17 +34,8 @@ export const navigation: TNavigation[] = [
   },
   {
     title: "Categories",
+    url: "/dashboard/categories",
     icon: Layers,
-    items: [
-      {
-        title: "All Categories",
-        url: "/dashboard/categories",
-      },
-      {
-        title: "Create Category",
-        url: "/dashboard/categories/create",
-      },
-    ],
   },
   {
     title: "Courses",

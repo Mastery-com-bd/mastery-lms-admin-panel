@@ -1,26 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Badge } from "@/components/ui/badge";
-import { TCategory } from "@/types/category.types";
 import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
-import CategoryDropdown from "./CategoryDropdown";
-import CategorySorting from "./CategorySorting";
+import CategorySorting from "../../category/all/CategorySorting";
+import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
-import { deleteCategory } from "@/service/category";
 import { toast } from "sonner";
-import CreateCategory from "./CreateCategory";
+import { deleteCourseLearning } from "@/service/courseLearning";
+import CreateCourseLearning from "./CreateCourseLearning";
+import { TCourse } from "@/types/course.types";
+import { TCourseLearningData } from "@/types/courseLearning.types";
 
-export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
+export const courseLearningTableColumn = (
+  course: TCourse[],
+): ColumnDef<TCourseLearningData>[] => [
   {
-    id: "name",
-    header: () => (
-      <div className="flex items-center gap-1">
-        <CategorySorting name="Name" sort="name" />
-      </div>
-    ),
+    id: "course",
+    header: "Course",
     cell: ({ row }) => {
-      const name = row.original?.name;
+      const name = row.original?.course?.title;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
       return (
         <div className="relative group inline-block">
@@ -36,7 +35,7 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     id: "description",
     header: "Description",
     cell: ({ row }) => {
-      const name = row.original?.description;
+      const name = row.original?.content;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
       return (
         <div className="relative group inline-block">
@@ -59,6 +58,10 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
         </Badge>
       );
     },
+  },
+  {
+    accessorKey: "order",
+    header: "Order",
   },
 
   {
@@ -87,16 +90,19 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      const category = row.original;
+      const courseLearning = row.original;
+
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
       ) => {
         setLoading(true);
-        const toastId = toast.loading("category deleting", { duration: 3000 });
+        const toastId = toast.loading("course learning deleting", {
+          duration: 3000,
+        });
         try {
-          const result = await deleteCategory(id);
+          const result = await deleteCourseLearning(id);
           if (result?.success) {
             toast.success(result?.message, { id: toastId, duration: 3000 });
             setLoading(false);
@@ -112,8 +118,15 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
       };
 
       return (
-        <CategoryDropdown id={id} handleDelete={handleDelete}>
-          <CreateCategory category={category} />
+        <CategoryDropdown
+          id={id}
+          handleDelete={handleDelete}
+          path={`/dashboard/course-learning/${id}`}
+        >
+          <CreateCourseLearning
+            course={course}
+            courseLearning={courseLearning}
+          />
         </CategoryDropdown>
       );
     },

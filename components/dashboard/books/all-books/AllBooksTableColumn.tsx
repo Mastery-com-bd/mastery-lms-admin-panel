@@ -10,8 +10,12 @@ import Image from "next/image";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { deleteBooks } from "@/service/books";
+import CreateBook from "./CreateBook";
+import { TCategory } from "@/types/category.types";
 
-export const bookTableColumn = (): ColumnDef<TBooks>[] => [
+export const bookTableColumn = (
+  categories: TCategory[],
+): ColumnDef<TBooks>[] => [
   {
     id: "name",
     header: () => (
@@ -128,6 +132,7 @@ export const bookTableColumn = (): ColumnDef<TBooks>[] => [
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
+      const book = row.original;
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
@@ -153,9 +158,15 @@ export const bookTableColumn = (): ColumnDef<TBooks>[] => [
       return (
         <CategoryDropdown
           id={id}
-          path={`dashboard/books/${id}`}
+          path={`/dashboard/books/${id}`}
           handleDelete={handleDelete}
-        />
+        >
+          <CreateBook
+            categories={categories}
+            book={book as TBooks}
+            type="update"
+          />
+        </CategoryDropdown>
       );
     },
   },

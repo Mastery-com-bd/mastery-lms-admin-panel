@@ -14,9 +14,9 @@ import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const BooksFiltering = () => {
+const AllCourseRequirmentFiltering = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [status, setStatus] = useState<string>("all");
+  const [isActive, setIsActive] = useState<string>("all");
   const router = useRouter();
   const pathName = usePathname();
   const searchParams = useSearchParams();
@@ -25,12 +25,10 @@ const BooksFiltering = () => {
     const name = "target" in input ? input.target.name : input.name;
     const value = "target" in input ? input.target.value : input.value;
     const params = new URLSearchParams(searchParams.toString());
-    if (name === "productStatus") {
-      if (value === "all") {
-        params.delete(name);
-      } else {
-        params.set(name, value);
-      }
+    if (name === "isActive") {
+      if (value === "active") params.set(name, "true");
+      else if (value === "inactive") params.set(name, "false");
+      else params.delete(name);
     } else {
       params.set(name, value);
     }
@@ -42,7 +40,7 @@ const BooksFiltering = () => {
   const handleReset = () => {
     router.push(`${pathName}`);
     setSearchTerm("");
-    setStatus("");
+    setIsActive("");
   };
 
   return (
@@ -53,7 +51,7 @@ const BooksFiltering = () => {
           <Input
             type="search"
             name="searchTerm"
-            placeholder="Search categories..."
+            placeholder="Search course requirment..."
             className="pl-9 bg-muted/30 border-none"
             value={searchTerm}
             onChange={(e) => {
@@ -64,11 +62,11 @@ const BooksFiltering = () => {
         </div>
 
         <Select
-          value={status}
-          name="productStatus"
+          value={isActive}
+          name="isActive"
           onValueChange={(value) => {
-            setStatus(value);
-            handleChange({ name: "productStatus", value });
+            setIsActive(value);
+            handleChange({ name: "isActive", value });
           }}
         >
           <SelectTrigger className="w-full md:w-37.5 bg-muted/30 border-none">
@@ -76,15 +74,8 @@ const BooksFiltering = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            {["PUBLISHED", "DRAFT", "DISCONTINUED"].map((item, i) => {
-              const formatted =
-                item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
-              return (
-                <SelectItem key={i} value={item}>
-                  {formatted}
-                </SelectItem>
-              );
-            })}
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -98,4 +89,4 @@ const BooksFiltering = () => {
   );
 };
 
-export default BooksFiltering;
+export default AllCourseRequirmentFiltering;

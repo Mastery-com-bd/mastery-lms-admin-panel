@@ -1,15 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import {
-  createCourseLearning,
-  updateourseLearning,
-} from "@/service/courseLearning";
 import { TCourse } from "@/types/course.types";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -37,6 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  createCourseRequirment,
+  updateCourseRequirment,
+} from "@/service/courseRequirment";
+import { TCourseLearning } from "../../course-learning/allCourseLearning/CreateCourseLearning";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { TCourseLearningData } from "@/types/courseLearning.types";
 
@@ -60,27 +61,25 @@ export const formSchema = z.object({
     }),
 });
 
-export type TCourseLearning = z.infer<typeof formSchema>;
-
-const CreateCourseLearning = ({
+const CreateAllCourseRequirment = ({
   course,
-  courseLearning,
+  courseRequirment,
 }: {
   course: TCourse[];
-  courseLearning?: TCourseLearningData;
+  courseRequirment?: TCourseLearningData;
 }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      courseId: courseLearning?.course?.id ?? undefined,
-      content: courseLearning?.content ?? undefined,
-      order: courseLearning?.order.toString() ?? undefined,
+      courseId: courseRequirment?.course?.id ?? undefined,
+      content: courseRequirment?.content ?? undefined,
+      order: courseRequirment?.order.toString() ?? undefined,
     },
   });
 
   const onSubmit = async (data: TCourseLearning) => {
-    const toastId = toast.loading("course learning creating", {
+    const toastId = toast.loading("course requirment creating", {
       duration: 3000,
     });
     const payload = {
@@ -89,10 +88,10 @@ const CreateCourseLearning = ({
     };
     try {
       let result;
-      if (courseLearning) {
-        result = await updateourseLearning(payload, courseLearning?.id);
+      if (courseRequirment) {
+        result = await updateCourseRequirment(payload, courseRequirment?.id);
       } else {
-        result = await createCourseLearning(payload);
+        result = await createCourseRequirment(payload);
       }
 
       if (result?.success) {
@@ -106,6 +105,7 @@ const CreateCourseLearning = ({
       console.log(error);
     }
   };
+
   return (
     <Dialog
       open={open}
@@ -117,7 +117,7 @@ const CreateCourseLearning = ({
       }}
     >
       <DialogTrigger asChild>
-        {courseLearning ? (
+        {courseRequirment ? (
           <Button
             variant="secondary"
             className="cursor-pointer bg-transparent p-2 "
@@ -125,16 +125,17 @@ const CreateCourseLearning = ({
             Update
           </Button>
         ) : (
-          <Button className="cursor-pointer">Create Course Learning</Button>
+          <Button className="cursor-pointer">Create Course Requirement</Button>
         )}
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Course Learning</DialogTitle>
+          <DialogTitle>Course Requirment</DialogTitle>
           <DialogDescription>Add a course learning outline.</DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
@@ -216,4 +217,4 @@ const CreateCourseLearning = ({
   );
 };
 
-export default CreateCourseLearning;
+export default CreateAllCourseRequirment;

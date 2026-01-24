@@ -5,7 +5,7 @@ import { buildParams } from "@/utills/paramsBuilder";
 import { TQuery } from "../category";
 import { config } from "@/config";
 import { getValidToken } from "../auth/validToken";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export const getAllBooks = async (query?: TQuery) => {
   // const token = await getValidToken();
@@ -19,9 +19,29 @@ export const getAllBooks = async (query?: TQuery) => {
         // },
         next: {
           tags: ["Product"],
+          revalidate: 30,
         },
       },
     );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const getASingleBook = async (id: string) => {
+  try {
+    const res = await fetch(`${config.next_public_base_url}/product/${id}`, {
+      method: "GET",
+      // headers: {
+      //   Authorization: token,
+      // },
+      next: {
+        tags: ["Product"],
+        revalidate: 30,
+      },
+    });
     const result = await res.json();
     return result;
   } catch (error: any) {
@@ -41,6 +61,26 @@ export const createBook = async (data: FormData) => {
     });
     const result = await res.json();
     revalidateTag("Product", "default");
+    revalidatePath("/dashboard/books");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const updateBook = async (data: FormData, id: string) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(`${config.next_public_base_url}/product/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: token,
+      },
+      body: data,
+    });
+    const result = await res.json();
+    revalidateTag("Product", "default");
+    revalidatePath("/dashboard/books");
     return result;
   } catch (error: any) {
     return Error(error);
@@ -58,6 +98,7 @@ export const deleteBooks = async (id: string) => {
     });
     const result = await res.json();
     revalidateTag("Product", "default");
+    revalidatePath("/dashboard/books");
     return result;
   } catch (error: any) {
     return Error(error);

@@ -6,6 +6,7 @@ import CustomPagination from "@/components/ui/CustomPagination";
 import CategoryFiltering from "./CategoryFiltering";
 import { categoryTableColumn } from "./CategoryTableColumn";
 import CustomTable from "@/components/ui/CustomTable";
+import CreateCategory from "./CreateCategory";
 
 const AllCategory = ({
   categories,
@@ -22,6 +23,7 @@ const AllCategory = ({
         <h1 className="text-2xl font-semibold tracking-tight">
           All Categories
         </h1>
+        <CreateCategory />
       </div>
 
       <Card className="border-none shadow-sm py-4">
