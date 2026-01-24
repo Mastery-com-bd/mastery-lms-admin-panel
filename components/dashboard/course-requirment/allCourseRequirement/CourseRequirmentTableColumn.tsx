@@ -11,6 +11,7 @@ import { TCourseLearningData } from "@/types/courseLearning.types";
 import { deleteCourseRequirment } from "@/service/courseRequirment";
 import CreateAllCourseRequirment from "./CreateAllCourseRequirment";
 import { TCourse } from "@/types/course.types";
+import TooltipComponent from "@/components/ui/TooltipComponent";
 
 export const courseRequirmentTableColumn = (
   course: TCourse[],
@@ -37,14 +38,7 @@ export const courseRequirmentTableColumn = (
     cell: ({ row }) => {
       const name = row.original?.content;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
-      return (
-        <div className="relative group inline-block">
-          <h1>{trimedName}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {name}
-          </p>
-        </div>
-      );
+      return <TooltipComponent name={name} trimedName={trimedName} />;
     },
   },
   {

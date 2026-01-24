@@ -58,6 +58,7 @@ export const formSchema = z.object({
     .min(1, {
       message: "order must be included",
     }),
+  isActive: z.boolean().optional(),
 });
 
 export type TCourseLearning = z.infer<typeof formSchema>;
@@ -76,6 +77,7 @@ const CreateCourseLearning = ({
       courseId: courseLearning?.course?.id ?? undefined,
       content: courseLearning?.content ?? undefined,
       order: courseLearning?.order.toString() ?? undefined,
+      isActive: courseLearning?.isActive ?? undefined,
     },
   });
 
@@ -191,6 +193,38 @@ const CreateCourseLearning = ({
                   <FormLabel>Order</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="enter order" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Active Status (Optional)</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={
+                        field.value === undefined
+                          ? ""
+                          : field.value
+                            ? "true"
+                            : "false"
+                      }
+                      onValueChange={(value) =>
+                        field.onChange(value === "true")
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Yes</SelectItem>
+                        <SelectItem value="false">No</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { TCourse } from "@/types/course.types";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import z from "zod";
+import { createSubject, updateSubject } from "@/service/subject";
+import { TSubject } from "@/types/subject.types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import z from "zod";
 import {
   Form,
   FormControl,
@@ -22,10 +23,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -33,67 +34,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  createCourseRequirment,
-  updateCourseRequirment,
-} from "@/service/courseRequirment";
-import { TCourseLearning } from "../../course-learning/allCourseLearning/CreateCourseLearning";
-import RichTextEditor from "@/components/ui/RichTextEditor";
-import { TCourseLearningData } from "@/types/courseLearning.types";
+import { Button } from "@/components/ui/button";
 
-export const formSchema = z.object({
-  courseId: z.string({
-    message: "course is required",
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
   }),
-  content: z
-    .string({
-      message: "description is required",
-    })
-    .min(10, {
-      message: "Description must be at least 10 characters.",
-    }),
-  order: z
-    .string({
-      message: "order is required.",
-    })
-    .min(1, {
-      message: "order must be included",
-    }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  iconUrl: z.string().optional(),
   isActive: z.boolean().optional(),
 });
+export type TSubjectForm = z.infer<typeof formSchema>;
 
-const CreateAllCourseRequirment = ({
-  course,
-  courseRequirment,
-}: {
-  course: TCourse[];
-  courseRequirment?: TCourseLearningData;
-}) => {
+const CreateSubject = ({ subject }: { subject?: TSubject }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      courseId: courseRequirment?.course?.id ?? undefined,
-      content: courseRequirment?.content ?? undefined,
-      order: courseRequirment?.order.toString() ?? undefined,
-      isActive: courseRequirment?.isActive ?? undefined,
+      name: subject?.name ?? undefined,
+      description: subject?.description ?? undefined,
+      iconUrl: subject?.iconUrl ?? undefined,
+      isActive: subject?.isActive ?? undefined,
     },
   });
 
-  const onSubmit = async (data: TCourseLearning) => {
-    const toastId = toast.loading("course requirment creating", {
-      duration: 3000,
-    });
-    const payload = {
-      ...data,
-      order: Number(data.order),
-    };
+  async function onSubmit(values: TSubjectForm) {
+    const toastId = toast.loading("subject creating", { duration: 3000 });
     try {
       let result;
-      if (courseRequirment) {
-        result = await updateCourseRequirment(payload, courseRequirment?.id);
+      if (subject) {
+        result = await updateSubject(values, subject?.id);
       } else {
-        result = await createCourseRequirment(payload);
+        result = await createSubject(values);
       }
 
       if (result?.success) {
@@ -106,8 +80,7 @@ const CreateAllCourseRequirment = ({
     } catch (error: any) {
       console.log(error);
     }
-  };
-
+  }
   return (
     <Dialog
       open={open}
@@ -119,67 +92,35 @@ const CreateAllCourseRequirment = ({
       }}
     >
       <DialogTrigger asChild>
-        {courseRequirment ? (
+        {subject ? (
           <Button
             variant="secondary"
             className="cursor-pointer bg-transparent p-2 "
           >
-            Update
+            Update Subject
           </Button>
         ) : (
-          <Button className="cursor-pointer">Create Course Requirement</Button>
+          <Button className="cursor-pointer">Create Subject</Button>
         )}
       </DialogTrigger>
 
       {/* 🧾 Modal Content */}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Course Requirment</DialogTitle>
-          <DialogDescription>Add a course learning outline.</DialogDescription>
+          <DialogTitle>Create Subject</DialogTitle>
+          <DialogDescription>Add a new subject.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <FormLabel>Select Category</FormLabel>
-              <Controller
-                name="courseId"
-                control={form.control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {course.map((item, i) => {
-                        return (
-                          <SelectItem key={i} value={item?.id}>
-                            {item?.title}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.courseId && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.courseId.message}
-                </p>
-              )}
-            </div>
-
             <FormField
               control={form.control}
-              name="content"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    <Input placeholder="Subject Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -188,14 +129,30 @@ const CreateAllCourseRequirment = ({
 
             <FormField
               control={form.control}
-              name="order"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Order</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="enter order" {...field} />
+                    <Textarea placeholder="Describe Subject..." {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="iconUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Icon URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://example.com/icon.png"
+                      {...field}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -252,4 +209,4 @@ const CreateAllCourseRequirment = ({
   );
 };
 
-export default CreateAllCourseRequirment;
+export default CreateSubject;

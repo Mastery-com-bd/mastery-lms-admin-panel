@@ -3,31 +3,40 @@
 import { Badge } from "@/components/ui/badge";
 import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
-import CategorySorting from "../../category/all/CategorySorting";
-import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { deleteCourseLearning } from "@/service/courseLearning";
-import CreateCourseLearning from "./CreateCourseLearning";
-import { TCourse } from "@/types/course.types";
-import { TCourseLearningData } from "@/types/courseLearning.types";
+import { TSubject } from "@/types/subject.types";
 import TooltipComponent from "@/components/ui/TooltipComponent";
+import Image from "next/image";
+import { deleteSubject } from "@/service/subject";
+import CategorySorting from "../../category/all/CategorySorting";
+import CategoryDropdown from "../../category/all/CategoryDropdown";
+import CreateSubject from "./CreateSubject";
 
-export const courseLearningTableColumn = (
-  course: TCourse[],
-): ColumnDef<TCourseLearningData>[] => [
+export const subjectTableColumn = (): ColumnDef<TSubject>[] => [
   {
-    id: "course",
-    header: "Course",
+    id: "name",
+    header: () => (
+      <div className="flex items-center gap-1">
+        <CategorySorting name="Name" sort="name" />
+      </div>
+    ),
     cell: ({ row }) => {
-      const name = row.original?.course?.title;
+      const name = row.original?.name;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
       return (
-        <div className="relative group inline-block">
-          <h1>{trimedName}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {name}
-          </p>
+        <div className=" flex items-center gap-2">
+          <Image
+            src={
+              row.original?.iconUrl ||
+              "https://res.cloudinary.com/dbb6nen3p/image/upload/v1762848442/no_image_s3demz.png"
+            }
+            height={50}
+            width={50}
+            alt={name}
+            className="h-10 w-10 rounded-full"
+          />
+          <TooltipComponent name={name} trimedName={trimedName} />;
         </div>
       );
     },
@@ -36,7 +45,7 @@ export const courseLearningTableColumn = (
     id: "description",
     header: "Description",
     cell: ({ row }) => {
-      const name = row.original?.content;
+      const name = row.original?.description;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
       return <TooltipComponent name={name} trimedName={trimedName} />;
     },
@@ -52,10 +61,6 @@ export const courseLearningTableColumn = (
         </Badge>
       );
     },
-  },
-  {
-    accessorKey: "order",
-    header: "Order",
   },
 
   {
@@ -84,19 +89,16 @@ export const courseLearningTableColumn = (
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      const courseLearning = row.original;
-
+      const category = row.original;
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
       ) => {
         setLoading(true);
-        const toastId = toast.loading("course learning deleting", {
-          duration: 3000,
-        });
+        const toastId = toast.loading("subject deleting", { duration: 3000 });
         try {
-          const result = await deleteCourseLearning(id);
+          const result = await deleteSubject(id);
           if (result?.success) {
             toast.success(result?.message, { id: toastId, duration: 3000 });
             setLoading(false);
@@ -115,12 +117,9 @@ export const courseLearningTableColumn = (
         <CategoryDropdown
           id={id}
           handleDelete={handleDelete}
-          path={`/dashboard/course-learning/${id}`}
+          path={`/dashboard/subjects/${id}`}
         >
-          <CreateCourseLearning
-            course={course}
-            courseLearning={courseLearning}
-          />
+          <CreateSubject subject={category} />
         </CategoryDropdown>
       );
     },

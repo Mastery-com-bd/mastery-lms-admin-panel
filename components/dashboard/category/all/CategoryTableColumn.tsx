@@ -10,6 +10,8 @@ import { Dispatch, SetStateAction } from "react";
 import { deleteCategory } from "@/service/category";
 import { toast } from "sonner";
 import CreateCategory from "./CreateCategory";
+import Image from "next/image";
+import TooltipComponent from "@/components/ui/TooltipComponent";
 
 export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
   {
@@ -23,11 +25,18 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
       const name = row.original?.name;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
       return (
-        <div className="relative group inline-block">
-          <h1>{trimedName}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {name}
-          </p>
+        <div className=" flex items-center gap-2">
+          <Image
+            src={
+              row.original?.iconUrl ||
+              "https://res.cloudinary.com/dbb6nen3p/image/upload/v1762848442/no_image_s3demz.png"
+            }
+            height={50}
+            width={50}
+            alt={name}
+            className="h-10 w-10 rounded-full"
+          />
+          <TooltipComponent name={name} trimedName={trimedName} />;
         </div>
       );
     },
@@ -38,14 +47,7 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
     cell: ({ row }) => {
       const name = row.original?.description;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
-      return (
-        <div className="relative group inline-block">
-          <h1>{trimedName}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {name}
-          </p>
-        </div>
-      );
+      return <TooltipComponent name={name} trimedName={trimedName} />;
     },
   },
   {

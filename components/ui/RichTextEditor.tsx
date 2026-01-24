@@ -44,7 +44,10 @@ const RichTextEditor = ({ value, onChange }: Props) => {
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/40">
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBold().run();
+          }}
           className={btnClass(editor.isActive("bold"))}
         >
           <Bold size={16} />
@@ -52,7 +55,10 @@ const RichTextEditor = ({ value, onChange }: Props) => {
 
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleItalic().run();
+          }}
           className={btnClass(editor.isActive("italic"))}
         >
           <Italic size={16} />
@@ -60,9 +66,10 @@ const RichTextEditor = ({ value, onChange }: Props) => {
 
         <button
           type="button"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleHeading({ level: 2 }).run();
+          }}
           className={btnClass(editor.isActive("heading", { level: 2 }))}
         >
           <Heading2 size={16} />
@@ -70,7 +77,10 @@ const RichTextEditor = ({ value, onChange }: Props) => {
 
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBulletList().run();
+          }}
           className={btnClass(editor.isActive("bulletList"))}
         >
           <List size={16} />
@@ -86,7 +96,10 @@ const RichTextEditor = ({ value, onChange }: Props) => {
 
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBulletList().run();
+          }}
           className={btnClass(editor.isActive("blockquote"))}
         >
           <Quote size={16} />
