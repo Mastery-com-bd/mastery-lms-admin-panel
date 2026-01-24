@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LightbulbIcon,
   LucideIcon,
+  ShieldCheck,
   SquaresSubtract,
   Video,
 } from "lucide-react";
@@ -42,6 +43,11 @@ export const navigation: TNavigation[] = [
     title: "Subjects",
     url: "/dashboard/subjects",
     icon: SquaresSubtract,
+  },
+  {
+    title: "Certificates",
+    url: "/dashboard/certificates",
+    icon: ShieldCheck,
   },
   {
     title: "Courses",
