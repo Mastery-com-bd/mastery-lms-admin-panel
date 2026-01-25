@@ -6,17 +6,22 @@ import { TQuery } from "../category";
 import { buildParams } from "@/utills/paramsBuilder";
 import { getValidToken } from "../auth/validToken";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { cookies } from "next/headers";
 
 export const getAllCertificates = async (query?: TQuery) => {
-  // const token = await getValidToken();
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+    if (!token) {
+      throw new Error("you are not authorized");
+    }
     const res = await fetch(
       `${config.next_public_base_url}/certificate?${buildParams(query)}`,
       {
         method: "GET",
-        // headers: {
-        //   Authorization: token,
-        // },
+        headers: {
+          Authorization: token,
+        },
         next: {
           tags: ["Certificate"],
           revalidate: 30,

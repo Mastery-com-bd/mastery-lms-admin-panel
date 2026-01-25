@@ -48,3 +48,23 @@ export const getAllCourseElement = async (query?: TQuery) => {
     return Error(error);
   }
 };
+
+export const getAllCourses = async (query?: TQuery) => {
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/course?${buildParams(query)}`,
+      {
+        method: "GET",
+
+        next: {
+          tags: ["Course"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};

@@ -20,7 +20,7 @@ type TDropdownProps = {
     setOpen: Dispatch<SetStateAction<boolean>>,
     setLoading: Dispatch<SetStateAction<boolean>>,
   ) => Promise<void>;
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 const CategoryDropdown = ({
@@ -47,8 +47,8 @@ const CategoryDropdown = ({
             </Link>
           </DropdownMenuItem>
         )}
+        {children && <DropdownMenuItem asChild>{children}</DropdownMenuItem>}
 
-        <DropdownMenuItem asChild>{children}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-red-600"

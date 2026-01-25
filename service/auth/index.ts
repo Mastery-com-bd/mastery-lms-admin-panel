@@ -57,6 +57,16 @@ export const getCurrentUser = async () => {
   }
 };
 
+export const getCurrentUserWithAccess = async (token: string) => {
+  let decodedData = null;
+  if (token) {
+    decodedData = await jwtDecode(token);
+    return decodedData;
+  } else {
+    return null;
+  }
+};
+
 export const getNewToken = async () => {
   const cookieStore = await cookies();
   const cookieToken = cookieStore.get("refreshToken");
@@ -90,9 +100,7 @@ export const logout = async (): Promise<{
     (await cookies()).delete("accessToken");
     return { success: true, message: "Logout successful" };
   } catch (error: any) {
-    // Still delete cookie even if backend call fails
-    (await cookies()).delete("authToken");
     console.error("Logout error:", error);
-    return { success: true, message: "Logged out" };
+    return { success: false, message: "logged out failed Logged out" };
   }
 };
