@@ -5,3 +5,8 @@ export type TUser = {
   id: string;
   role: "ADMIN";
 };
+
+export type TInstructor = {
+  id: string;
+  fullName: string;
+};

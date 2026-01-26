@@ -100,7 +100,7 @@ const HeatmapCell = ({
   return (
     <div
       className={`h-8 w-full rounded-md ${getColor(
-        intensity
+        intensity,
       )} relative group cursor-pointer transition-colors hover:ring-2 hover:ring-violet-500`}
     >
       {intensity >= 3 && (
@@ -131,7 +131,7 @@ const CustomTooltip = ({
           {payload.map(
             (
               entry: { color: string; name: string; value: string },
-              index: number
+              index: number,
             ) => (
               <div key={index} className="flex items-center gap-2 text-xs">
                 <div
@@ -143,7 +143,7 @@ const CustomTooltip = ({
                   {entry.value}
                 </span>
               </div>
-            )
+            ),
           )}
         </div>
       </div>
@@ -255,85 +255,85 @@ const Analytics = () => {
         </motion.div>
 
         {/* Transaction Activity Chart - Takes up 4 columns */}
-       <motion.div
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           className="col-span-4"
-       >
-         <Card className="col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-base font-medium">
-              Transaction activity
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="pl-0">
-            <div className="h-75 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={transactionData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#E5E7EB"
-                  />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                    tickFormatter={(value) =>
-                      value >= 1000 ? `${value / 1000}K` : value
-                    }
-                  />
-                  <Tooltip
-                    content={<CustomTooltip />}
-                    cursor={{ strokeDasharray: "4 4", stroke: "#9ca3af" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    // name="Total transaction"
-                    stroke="#8b5cf6"
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#8b5cf6" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="success"
-                    name="Success Transaction"
-                    stroke="#374151"
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#374151" }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    wrapperStyle={{ display: "none" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-       </motion.div>
+        >
+          <Card className="col-span-4">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="text-base font-medium">
+                Transaction activity
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="pl-0">
+              <div className="h-75 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={transactionData}
+                    margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#E5E7EB"
+                    />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                      tickFormatter={(value) =>
+                        value >= 1000 ? `${value / 1000}K` : value
+                      }
+                    />
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ strokeDasharray: "4 4", stroke: "#9ca3af" }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      // name="Total transaction"
+                      stroke="#8b5cf6"
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 6, strokeWidth: 0, fill: "#8b5cf6" }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="success"
+                      name="Success Transaction"
+                      stroke="#374151"
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 6, strokeWidth: 0, fill: "#374151" }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      wrapperStyle={{ display: "none" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
@@ -375,11 +375,11 @@ const StatCard = ({
             {data.value}
           </TextAnimation>
         </div>
-        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border">
+        <div className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border">
           <TextAnimation delay={0.1} duration={0.1} split="letter">
             {data.dateRange}
           </TextAnimation>
-        </p>
+        </div>
       </CardContent>
     </Card>
   );

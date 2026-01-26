@@ -1,73 +1,87 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { convertDate } from "@/utills/convertDate";
 import { ColumnDef } from "@tanstack/react-table";
-import CategorySorting from "../../category/all/CategorySorting";
-import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { deleteCourseLearning } from "@/service/courseLearning";
-import CreateCourseLearning from "./CreateCourseLearning";
-import { TCourse } from "@/types/course.types";
-import { TCourseLearningData } from "@/types/courseLearning.types";
+import Image from "next/image";
 import TooltipComponent from "@/components/ui/TooltipComponent";
+import { TCertificate } from "@/types/certificate.types";
+import CategorySorting from "../../category/all/CategorySorting";
+import CategoryDropdown from "../../category/all/CategoryDropdown";
+import { deleteCertificate } from "@/service/certificate";
 
-export const courseLearningTableColumn = (
-  course: TCourse[],
-): ColumnDef<TCourseLearningData>[] => [
+export const certificateTableColumn = (): ColumnDef<TCertificate>[] => [
   {
-    id: "course",
-    header: "Course",
+    id: "user",
+    header: () => (
+      <div className="flex items-center gap-1">
+        <CategorySorting name="Students" sort="name" />
+      </div>
+    ),
     cell: ({ row }) => {
-      const name = row.original?.course?.title;
+      const name = row.original?.user?.fullName;
       const trimedName = name.length > 30 ? name.slice(0, 16) + "..." : name;
       return (
-        <div className="relative group inline-block">
-          <h1>{trimedName}</h1>
-          <p className="absolute bottom-full left-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg px-2 py-1 shadow-md whitespace-nowrap z-10">
-            {name}
-          </p>
+        <div className=" flex items-center gap-2">
+          <Image
+            src={
+              row.original?.user?.profilePhoto ||
+              "https://res.cloudinary.com/dbb6nen3p/image/upload/v1762848442/no_image_s3demz.png"
+            }
+            height={50}
+            width={50}
+            alt={name}
+            className="h-10 w-10 rounded-full"
+          />
+          <TooltipComponent name={name} trimedName={trimedName} />;
         </div>
       );
     },
   },
   {
-    id: "description",
-    header: "Description",
+    id: "course",
+    header: "Course",
     cell: ({ row }) => {
-      const name = row.original?.content;
+      const name = row.original?.course?.title;
       const trimedName = name.length > 50 ? name.slice(0, 16) + "..." : name;
       return <TooltipComponent name={name} trimedName={trimedName} />;
     },
   },
+
   {
-    accessorKey: "status",
-    header: "Status",
+    id: "Certificate",
+    header: "Certificate",
     cell: ({ row }) => {
-      const status = row.original?.isActive;
+      const certificateImage = row.original?.certificatImage;
+
       return (
-        <Badge variant={status ? "default" : "secondary"}>
-          {status ? "Active" : "Inactive"}
-        </Badge>
+        <div className=" flex items-center gap-2">
+          <Image
+            src={
+              certificateImage ||
+              "https://res.cloudinary.com/dbb6nen3p/image/upload/v1762848442/no_image_s3demz.png"
+            }
+            height={50}
+            width={50}
+            alt={row.original?.user?.fullName || "Certificate Image"}
+            className="h-10 w-10 rounded-full"
+          />
+        </div>
       );
     },
   },
-  {
-    accessorKey: "order",
-    header: "Order",
-  },
 
   {
-    accessorKey: "createdAt",
+    accessorKey: "issuedAt",
     header: () => (
       <div className="flex items-center gap-1">
-        <CategorySorting name="Created" sort="createdAt" />
+        <CategorySorting name="Issued At" sort="issuedAt" />
       </div>
     ),
     cell: ({ row }) => {
       const { creationDate, creationTime } = convertDate(
-        new Date(row.original?.createdAt),
+        new Date(row.original?.issuedAt),
       );
 
       return (
@@ -84,19 +98,17 @@ export const courseLearningTableColumn = (
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      const courseLearning = row.original;
-
       const handleDelete = async (
         id: string,
         setOpen: Dispatch<SetStateAction<boolean>>,
         setLoading: Dispatch<SetStateAction<boolean>>,
       ) => {
         setLoading(true);
-        const toastId = toast.loading("course learning deleting", {
+        const toastId = toast.loading("certificate deleting", {
           duration: 3000,
         });
         try {
-          const result = await deleteCourseLearning(id);
+          const result = await deleteCertificate(id);
           if (result?.success) {
             toast.success(result?.message, { id: toastId, duration: 3000 });
             setLoading(false);
@@ -115,13 +127,7 @@ export const courseLearningTableColumn = (
         <CategoryDropdown
           id={id}
           handleDelete={handleDelete}
-          path={`/dashboard/course-learning/${id}`}
-        >
-          <CreateCourseLearning
-            course={course}
-            courseLearning={courseLearning}
-          />
-        </CategoryDropdown>
+        ></CategoryDropdown>
       );
     },
   },
