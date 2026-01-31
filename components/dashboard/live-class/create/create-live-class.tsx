@@ -40,11 +40,11 @@ const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   startTime: z.string().min(1, "Please select a date and time"),
-  endTime: z.string().min(1, "Please select a date and time"),
+  endTime: z.string().optional(),
   duration: z.string().min(1, "Duration is required"),
-  meetingUrl: z.string().url("Please enter a valid meeting link"),
-  meetingId: z.string().min(1, "Meeting ID is required"),
-  meetingPassword: z.string().min(1, "Meeting password is required"),
+  meetingUrl: z.string().optional(),
+  meetingId: z.string().optional(),
+  meetingPassword: z.string().optional(),
 });
 
 interface Course {

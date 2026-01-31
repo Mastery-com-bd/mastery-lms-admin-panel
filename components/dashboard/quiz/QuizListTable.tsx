@@ -39,16 +39,16 @@ import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { format } from "date-fns";
 import {
   FileText,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { motion } from "motion/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -62,7 +62,7 @@ interface Quiz {
   passingScore: number;
   timeLimit: number | null;
   questions?: unknown[];
-  status?: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   // courseName might not be in API, we can derive it or it might be there
@@ -74,18 +74,71 @@ interface Course {
   title: string;
 }
 
-export function QuizListTable() {
+interface Meta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPage: number;
+}
+
+interface QuizListTableProps {
+  quizzes: Quiz[];
+  meta?: Meta;
+}
+
+export function QuizListTable({ quizzes, meta }: QuizListTableProps) {
   const router = useRouter();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [courseFilter, setCourseFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
+  // Derived state from URL search params
+  const statusFilter = searchParams.get("isActive") || "all";
+  const courseFilter = searchParams.get("courseId") || "all";
+  const searchTermParam = searchParams.get("searchTerm") || "";
+
+  // Local state for search input to allow typing
+  const [searchTerm, setSearchTerm] = useState(searchTermParam);
+
+  // Debounce search update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchTermParam) {
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchTerm) {
+          params.set("searchTerm", searchTerm);
+        } else {
+          params.delete("searchTerm");
+        }
+        params.set("page", "1"); // Reset page on search
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, router, pathname, searchParams, searchTermParam]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Course for filter options
   const fetchCourses = useCallback(async () => {
     try {
       const response = await fetch(
@@ -93,7 +146,7 @@ export function QuizListTable() {
         {
           cache: "no-store",
           credentials: "include",
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -108,51 +161,6 @@ export function QuizListTable() {
     fetchCourses();
   }, [fetchCourses]);
 
-  const fetchQuizzes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz`,
-        {
-          cache: "no-store",
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch quizzes");
-      }
-      const data = await response.json();
-      // Assuming data is array or data.data is array. User example: console.log(data)
-      // Usually it's data.data in this project based on other files
-      setQuizzes(Array.isArray(data) ? data : data.data || []);
-    } catch (error) {
-      console.error("Failed to load quizzes:", error);
-      // toast.error("Failed to load quizzes"); // Avoid toast on initial load if possible or use it
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchQuizzes();
-  }, [fetchQuizzes]);
-
-  const filteredQuizzes = quizzes.filter((quiz) => {
-    const courseName =
-      quiz.courseName ||
-      courses.find((c) => c.id === quiz.courseId)?.title ||
-      "Unknown Course";
-    const matchesSearch =
-      quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      courseName.toLowerCase().includes(searchTerm.toLowerCase());
-    // status might not exist on API quiz object, so we treat it carefully
-    const quizStatus = quiz.status || "draft";
-    const matchesStatus = statusFilter === "all" || quizStatus === statusFilter;
-    const matchesCourse =
-      courseFilter === "all" || quiz.courseId === courseFilter;
-    return matchesSearch && matchesStatus && matchesCourse;
-  });
-
   const handleDeleteClick = (quizId: string) => {
     setQuizToDelete(quizId);
     setDeleteDialogOpen(true);
@@ -161,7 +169,6 @@ export function QuizListTable() {
   const confirmDelete = async () => {
     if (!quizToDelete) return;
 
-    setIsDeleting(true);
     showLoading("Deleting quiz...");
 
     try {
@@ -170,7 +177,7 @@ export function QuizListTable() {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -181,7 +188,6 @@ export function QuizListTable() {
       showSuccess({ message: "Quiz deleted successfully" });
       setDeleteDialogOpen(false);
       setQuizToDelete(null);
-      fetchQuizzes();
     } catch (error) {
       toast.dismiss();
       router.refresh();
@@ -189,8 +195,6 @@ export function QuizListTable() {
         message:
           error instanceof Error ? error.message : "Something went wrong",
       });
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -198,23 +202,10 @@ export function QuizListTable() {
     router.push("/dashboard/quiz/create");
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Filters and Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-      >
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-1 gap-3 flex-wrap">
           <div className="relative flex-1 min-w-50 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -225,17 +216,23 @@ export function QuizListTable() {
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => handleFilterChange("isActive", value)}
+          >
             <SelectTrigger className="w-35">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Active Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="false">Draft</SelectItem>
+              <SelectItem value="true">Published</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <Select
+            value={courseFilter}
+            onValueChange={(value) => handleFilterChange("courseId", value)}
+          >
             <SelectTrigger className="w-45">
               <SelectValue placeholder="Course" />
             </SelectTrigger>
@@ -258,15 +255,10 @@ export function QuizListTable() {
             Create Quiz
           </Link>
         </Button>
-      </motion.div>
+      </div>
 
       {/* Quiz Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="border border-border rounded-lg bg-card"
-      >
+      <div className="border border-border rounded-lg bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -279,7 +271,7 @@ export function QuizListTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredQuizzes.length === 0 ? (
+            {quizzes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12">
                   <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -292,13 +284,8 @@ export function QuizListTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredQuizzes.map((quiz, idx) => (
-                <motion.tr
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 + idx * 0.1 }}
-                  key={quiz.id || idx}
-                >
+              quizzes.map((quiz, idx) => (
+                <TableRow key={quiz.id || idx}>
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">
@@ -323,16 +310,14 @@ export function QuizListTable() {
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge
-                      variant={
-                        quiz.status === "published" ? "default" : "secondary"
-                      }
+                      variant={quiz.isActive ? "default" : "secondary"}
                       className={
-                        quiz.status === "published"
+                        quiz.isActive
                           ? "bg-success/20 text-success border-success/30"
                           : "bg-warning/20 text-warning border-warning/30"
                       }
                     >
-                      {quiz.status === "published" ? "Published" : "Draft"}
+                      {quiz.isActive ? "Published" : "Draft"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -370,12 +355,39 @@ export function QuizListTable() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
-                </motion.tr>
+                </TableRow>
               ))
             )}
           </TableBody>
         </Table>
-      </motion.div>
+      </div>
+
+      {/* Pagination */}
+      {meta?.totalPage && meta?.totalPage > 1 && (
+        <div className="flex items-center justify-end gap-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(meta.page - 1)}
+            disabled={meta.page === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            Page {meta.page} of {meta.totalPage}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(meta.page + 1)}
+            disabled={meta.page === meta.totalPage}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
