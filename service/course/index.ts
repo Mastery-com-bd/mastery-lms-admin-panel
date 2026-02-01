@@ -6,6 +6,7 @@ import { getValidToken } from "../auth/validToken";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { buildParams } from "@/utills/paramsBuilder";
 import { TQuery } from "../category";
+import { cache } from "react";
 
 export const createCourse = async (data: FormData) => {
   const token = await getValidToken();
@@ -49,13 +50,12 @@ export const getAllCourseElement = async (query?: TQuery) => {
   }
 };
 
-export const getAllCourses = async (query?: TQuery) => {
+export const getAllCourses = cache(async (query?: TQuery) => {
   try {
     const res = await fetch(
       `${config.next_public_base_url}/course?${buildParams(query)}`,
       {
         method: "GET",
-
         next: {
           tags: ["Course"],
           revalidate: 30,
@@ -67,4 +67,4 @@ export const getAllCourses = async (query?: TQuery) => {
   } catch (error: any) {
     return Error(error);
   }
-};
+});

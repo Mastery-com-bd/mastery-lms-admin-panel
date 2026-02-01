@@ -1,5 +1,5 @@
 const CertificateLoadingSkeleton = () => {
-  return <div>this is certificate loading</div>;
+  return <div>Loading...</div>;
 };
 
 export default CertificateLoadingSkeleton;

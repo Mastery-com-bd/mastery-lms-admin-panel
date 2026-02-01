@@ -1,17 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  CalendarClock,
-  Clock3,
-  Video,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -19,9 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import {
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Search,
+  Video,
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface CourseSummary {
   id: string;
@@ -49,31 +49,45 @@ interface Meta {
   totalPages?: number;
 }
 
-const AllLiveClass = () => {
-  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
+const AllLiveClass = ({
+  liveClasses,
+  meta,
+}: {
+  liveClasses: LiveClass[];
+  meta: Meta;
+}) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [courses, setCourses] = useState<CourseSummary[]>([]);
-  const [meta, setMeta] = useState<Meta>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
-  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchTerm") || "");
+  
+  // Derived state from URL params
+  const courseFilter = searchParams.get("courseId") || "all";
+  const statusFilter = searchParams.get("status") || "all";
+  const sortOrder = searchParams.get("sortOrder") || "asc";
 
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [courseFilter, setCourseFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const sortBy = "scheduledAt";
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
+  // Debounce search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm) {
+        params.set("searchTerm", searchTerm);
+      } else {
+        params.delete("searchTerm");
+      }
+      
+      // Only push if changed
+      if (params.get("searchTerm") !== (searchParams.get("searchTerm") || null)) {
+        params.set("page", "1"); // Reset to page 1 on search
+        router.push(`${pathname}?${params.toString()}`);
+      }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [searchInput]);
+  }, [searchTerm, router, pathname, searchParams]);
 
+  // Fetch courses for filter (Client-side as requested)
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -91,70 +105,28 @@ const AllLiveClass = () => {
     fetchCourses();
   }, []);
 
-  const fetchLiveClasses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", meta.page.toString());
-      params.set("limit", meta.limit.toString());
-      params.set("sortBy", sortBy);
-      params.set("sortOrder", sortOrder);
-
-      if (searchTerm) {
-        params.set("searchTerm", searchTerm);
-      }
-
-      if (courseFilter !== "all") {
-        params.set("courseId", courseFilter);
-      }
-
-      if (statusFilter !== "all") {
-        params.set("status", statusFilter);
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/live-class?${params.toString()}`,
-        {
-          credentials: "include",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch live classes");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setLiveClasses(data.data || []);
-        setMeta({
-          page: data.meta?.page ?? meta.page,
-          limit: data.meta?.limit ?? meta.limit,
-          total: data.meta?.total ?? 0,
-          totalPages: data.meta?.totalPages ?? 0,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
     }
-  }, [
-    meta.page,
-    meta.limit,
-    sortBy,
-    sortOrder,
-    searchTerm,
-    courseFilter,
-    statusFilter,
-  ]);
+    params.set("page", "1"); // Reset to page 1 on filter change
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
-  useEffect(() => {
-    fetchLiveClasses();
-  }, [fetchLiveClasses]);
+  const handleSortChange = () => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sortOrder", newOrder);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const handlePageChange = (newPage: number) => {
-    setMeta((prev) => ({ ...prev, page: newPage }));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const totalPages =
@@ -205,8 +177,8 @@ const AllLiveClass = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search by title or description"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
             </div>
@@ -214,10 +186,7 @@ const AllLiveClass = () => {
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <Select
                 value={courseFilter}
-                onValueChange={(value) => {
-                  setCourseFilter(value);
-                  setMeta((prev) => ({ ...prev, page: 1 }));
-                }}
+                onValueChange={(value) => handleFilterChange("courseId", value)}
               >
                 <SelectTrigger className="w-full md:w-44">
                   <SelectValue placeholder="Filter by course" />
@@ -234,10 +203,7 @@ const AllLiveClass = () => {
 
               <Select
                 value={statusFilter}
-                onValueChange={(value) => {
-                  setStatusFilter(value);
-                  setMeta((prev) => ({ ...prev, page: 1 }));
-                }}
+                onValueChange={(value) => handleFilterChange("status", value)}
               >
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Status" />
@@ -254,131 +220,123 @@ const AllLiveClass = () => {
         </div>
 
         <div className="relative w-full overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Course
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Title
-                  </th>
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() =>
-                      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                    }
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Course
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Title
+                </th>
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={handleSortChange}
+                >
+                  Schedule
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Duration
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Status
+                </th>
+                <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {liveClasses.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="h-24 text-center text-muted-foreground"
                   >
-                    Schedule
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Duration
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
-                    Actions
-                  </th>
+                    No live classes found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {liveClasses.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No live classes found.
+              ) : (
+                liveClasses.map((liveClass) => (
+                  <tr
+                    key={liveClass.id}
+                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  >
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {liveClass.course?.title ||
+                            courses.find(
+                              (course) => course.id === liveClass.courseId
+                            )?.title ||
+                            "Untitled course"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {liveClass.courseId}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium line-clamp-2">
+                          {liveClass.title}
+                        </span>
+                        <span className="text-xs text-muted-foreground line-clamp-1">
+                          {liveClass.description}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center gap-1">
+                          <CalendarClock className="w-3 h-3" />
+                          {formatDateTime(liveClass.scheduledAt)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <span className="flex items-center gap-1">
+                        <Clock3 className="w-3 h-3" />
+                        {liveClass.duration} min
+                      </span>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <Badge>
+                        {getStatusBadge(liveClass)}
+                      </Badge>
+                    </td>
+                    <td className="p-4 align-middle text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {liveClass.meetingLink && (
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="hidden sm:inline-flex"
+                          >
+                            <a
+                              href={liveClass.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Join
+                            </a>
+                          </Button>
+                        )}
+                        <Button asChild size="sm" variant="outline">
+                          <Link
+                            href={`/dashboard/live-class/update/${liveClass.id}`}
+                          >
+                            Edit
+                          </Link>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  liveClasses.map((liveClass) => (
-                    <tr
-                      key={liveClass.id}
-                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                    >
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {liveClass.course?.title ||
-                              courses.find(
-                                (course) => course.id === liveClass.courseId
-                              )?.title ||
-                              "Untitled course"}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {liveClass.courseId}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium line-clamp-2">
-                            {liveClass.title}
-                          </span>
-                          <span className="text-xs text-muted-foreground line-clamp-1">
-                            {liveClass.description}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col gap-1">
-                          <span className="flex items-center gap-1">
-                            <CalendarClock className="w-3 h-3" />
-                            {formatDateTime(liveClass.scheduledAt)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <span className="flex items-center gap-1">
-                          <Clock3 className="w-3 h-3" />
-                          {liveClass.duration} min
-                        </span>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge>
-                          {getStatusBadge(liveClass)}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {liveClass.meetingLink && (
-                            <Button
-                              asChild
-                              size="sm"
-                              variant="outline"
-                              className="hidden sm:inline-flex"
-                            >
-                              <a
-                                href={liveClass.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Join
-                              </a>
-                            </Button>
-                          )}
-                          <Button asChild size="sm" variant="outline">
-                            <Link
-                              href={`/dashboard/live-class/update/${liveClass.id}`}
-                            >
-                              Edit
-                            </Link>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         <div className="flex items-center justify-between px-4 py-3 border-t text-xs sm:text-sm gap-3 flex-col sm:flex-row">
@@ -392,7 +350,7 @@ const AllLiveClass = () => {
               variant="outline"
               size="icon"
               onClick={() => handlePageChange(meta.page - 1)}
-              disabled={meta.page <= 1 || loading}
+              disabled={meta.page <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -400,7 +358,7 @@ const AllLiveClass = () => {
               variant="outline"
               size="icon"
               onClick={() => handlePageChange(meta.page + 1)}
-              disabled={meta.page >= totalPages || loading}
+              disabled={meta.page >= totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

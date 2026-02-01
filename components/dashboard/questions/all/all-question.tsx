@@ -5,8 +5,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
-  Loader2,
   Edit,
   Trash2,
 } from "lucide-react";
@@ -35,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { toast } from "sonner";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 interface QuizSummary {
   id: string;
@@ -61,44 +60,55 @@ interface Meta {
   totalPages?: number;
 }
 
-const AllQuestion = () => {
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [meta, setMeta] = useState<Meta>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
-  const [loading, setLoading] = useState(false);
+const AllQuestion = ({
+  questions,
+  meta,
+}: {
+  questions: QuizQuestion[];
+  meta: Meta;
+}) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [sortBy, setSortBy] = useState("order");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [quizzes, setQuizzes] = useState<QuizSummary[]>([]);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchTerm") || "");
+
+  // Derived state
+  const quizFilter = searchParams.get("quizId") || "all";
 
   // Debounce search input
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm) {
+        params.set("searchTerm", searchTerm);
+      } else {
+        params.delete("searchTerm");
+      }
+      // Only push if changed to avoid loop/redundant pushes
+      if (params.get("searchTerm") !== (searchParams.get("searchTerm") || null)) {
+         params.set("page", "1");
+         router.push(`${pathname}?${params.toString()}`);
+      }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [searchInput]);
+  }, [searchTerm, router, pathname, searchParams]);
 
-  // Fetch all questions on component load
+  // Fetch all quizzes for filter
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz-question?limit=100`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz?limit=100`,
           {
             credentials: "include",
           }
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch quizzes");
+        if (response.ok) {
+          const data = await response.json();
+          setQuizzes(data.data || []);
         }
-        const data = await response.json();
-        setQuestions(data.data || []);
       } catch (error) {
         console.log("Failed to fetch quizzes:", error);
       }
@@ -106,60 +116,21 @@ const AllQuestion = () => {
     fetchQuizzes();
   }, []);
 
-  const fetchQuestions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", meta.page.toString());
-      params.set("limit", meta.limit.toString());
-      params.set("sortBy", sortBy);
-      params.set("sortOrder", sortOrder);
-
-      if (searchTerm) {
-        params.set("searchTerm", searchTerm);
-      }
-
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_SERVER_URL
-        }/quiz-question?${params.toString()}`,
-        { cache: "no-store" }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch quiz questions");
-      }
-      const data = await response.json();
-      if (data.success) {
-        setQuestions(data.data || []);
-        setMeta({
-          page: data.meta?.page ?? meta.page,
-          limit: data.meta?.limit ?? meta.limit,
-          total: data.meta?.total ?? 0,
-          totalPages: data.meta?.totalPages ?? 0,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [meta.page, meta.limit, sortBy, sortOrder, searchTerm]);
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
-
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
     } else {
-      setSortBy(field);
-      setSortOrder("asc");
+      params.delete(key);
     }
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
-    setMeta((prev) => ({ ...prev, page: newPage }));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleQuestionDelete = async (questionId: string) => {
@@ -177,11 +148,9 @@ const AllQuestion = () => {
       }
       const data = await response.json();
       if (data.success) {
-        setQuestions((prev) =>
-          prev.filter((question) => question.id !== questionId)
-        );
         toast.dismiss();
         showSuccess({ message: "Question deleted successfully" });
+        router.refresh();
       }
     } catch (error) {
       console.log("Failed to delete question:", error);
@@ -213,129 +182,135 @@ const AllQuestion = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search question or explanation"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
             </div>
+             <Select
+              value={quizFilter}
+              onValueChange={(value) => handleFilterChange("quizId", value)}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Quiz" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Quizzes</SelectItem>
+                {quizzes.map((quiz) => (
+                  <SelectItem key={quiz.id} value={quiz.id}>
+                    {quiz.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="relative w-full overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer">
-                    <div className="flex items-center gap-1">Order</div>
-                  </th>
-                 
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer">
-                    <div className="flex items-center gap-1">Question</div>
-                  </th>
-
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer">
-                    <div className="flex items-center gap-1">Points</div>
-                  </th>
-                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Quiz
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Action
-                  </th>
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Order
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Question
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Points
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Quiz
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {questions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    No questions found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {questions.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No questions found.
+              ) : (
+                questions.map((q, idx) => (
+                  <tr
+                    key={q.id || idx}
+                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  >
+                    <td className="p-4 align-middle">{idx + 1}</td>
+
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium line-clamp-2 truncate max-w-75">
+                          {q.question || "No question provided"}
+                        </span>
+                        <Badge variant="default">
+                          {String.fromCharCode(65 + q.correctAnswer)}.{" "}
+                          {q.options[q.correctAnswer]}
+                        </Badge>
+                      </div>
+                    </td>
+                    
+                    <td className="p-4 align-middle">{q.points}</td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate max-w-75">
+                          {q.quiz?.title || "Untitled quiz"}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate max-w-75">
+                          {q.explanation || "No explanation provided"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" asChild>
+                          <Link
+                            href={`/dashboard/questions/update/${q.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete the question.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleQuestionDelete(q.id)}
+                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                              >
+                                Confirm
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  questions.map((q, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                    >
-                      <td className="p-4 align-middle">{idx + 1}</td>
-
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium line-clamp-2 truncate max-w-75">
-                            {q.question || "No question provided"}
-                          </span>
-                          <Badge variant="default">
-                            {String.fromCharCode(65 + q.correctAnswer)}.{" "}
-                            {q.options[q.correctAnswer]}
-                          </Badge>
-                        </div>
-                      </td>
-                      
-                      <td className="p-4 align-middle">{q.points}</td>
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col">
-                          <span className="font-medium truncate max-w-75">
-                            {q.quiz?.title || "Untitled quiz"}
-                          </span>
-                          <span className="text-xs text-muted-foreground truncate max-w-75">
-                            {q.explanation || "No explanation provided"}
-                          </span>
-                        </div>
-                      </td>
-                      <tr>
-                        <td className="p-4 align-middle">
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon">
-                              <Link
-                                href={`/dashboard/questions/update/${q.id}`}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you sure?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete the question.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleQuestionDelete(q.id)}
-                                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                                  >
-                                    Confirm
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
-                      </tr>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         <div className="flex items-center justify-between px-4 py-3 border-t text-xs sm:text-sm gap-3 flex-col sm:flex-row">
@@ -349,7 +324,7 @@ const AllQuestion = () => {
               variant="outline"
               size="icon"
               onClick={() => handlePageChange(meta.page - 1)}
-              disabled={meta.page <= 1 || loading}
+              disabled={meta.page <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -357,7 +332,7 @@ const AllQuestion = () => {
               variant="outline"
               size="icon"
               onClick={() => handlePageChange(meta.page + 1)}
-              disabled={meta.page >= totalPages || loading}
+              disabled={meta.page >= totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

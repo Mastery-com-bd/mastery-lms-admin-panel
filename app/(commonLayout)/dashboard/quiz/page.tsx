@@ -1,11 +1,23 @@
-import QuizPage from '@/components/dashboard/quiz/quiz-page'
+import { QuizListTable } from "@/components/dashboard/quiz/QuizListTable";
+import { getAllQuizzes } from "@/service/quiz";
 
-const Page = () => {
+const Page = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    [key: string]: string | string[] | number | undefined;
+  }>;
+}) => {
+  const query = await searchParams;
+  const result = await getAllQuizzes(query);
+
+  console.log(result.data)
+
   return (
-    <div>
-        <QuizPage />
+    <div className="p-5">
+      <QuizListTable quizzes={result?.data || []} meta={result?.meta} />
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;
