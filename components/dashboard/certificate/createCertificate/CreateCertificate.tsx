@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Upload, Check, ChevronsUpDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Upload,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -49,6 +55,7 @@ import { cn } from "@/lib/utils";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { config } from "@/config";
 import { getAllUsers } from "@/service/user";
+import Image from "next/image";
 
 // Define simplified interfaces for props
 interface User {
@@ -73,11 +80,14 @@ const formSchema = z.object({
   certificatImage: z.any().optional(),
 });
 
-const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificateProps) => {
+const CreateCertificate = ({
+  users: initialUsers,
+  courses,
+}: CreateCertificateProps) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  
+
   // States for student search
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -100,10 +110,10 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
         setIsSearching(true);
         try {
           // Fetch users with searchTerm and limit 10
-          const res = await getAllUsers({ 
-            searchTerm: searchTerm, 
-            limit: 10, 
-            role: "STUDENT" 
+          const res = await getAllUsers({
+            searchTerm: searchTerm,
+            limit: 10,
+            role: "STUDENT",
           });
           if (res?.data) {
             setUsers(res.data);
@@ -132,7 +142,7 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
       }
 
       form.setValue("certificatImage", file);
-      
+
       // Preview if image
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
@@ -154,16 +164,19 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
       const formData = new FormData();
       formData.append("userId", values.userId);
       formData.append("courseId", values.courseId);
-      
+
       if (values.certificatImage instanceof File) {
         formData.append("certificatImage", values.certificatImage);
       }
 
-      const response = await fetch(`${config.next_public_base_url}/certificate`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${config.next_public_base_url}/certificate`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        },
+      );
 
       const data = await response.json();
 
@@ -179,7 +192,8 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
       console.error(error);
       toast.dismiss();
       showError({
-        message: error instanceof Error ? error.message : "Something went wrong",
+        message:
+          error instanceof Error ? error.message : "Something went wrong",
       });
     } finally {
       setIsSubmitting(false);
@@ -197,7 +211,9 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Create Certificate</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Create Certificate
+        </h1>
       </div>
 
       <Card>
@@ -227,12 +243,14 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                               aria-expanded={open}
                               className={cn(
                                 "w-full justify-between",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                             >
                               {field.value
-                                ? users.find((user) => user.id === field.value)?.name ||
-                                  users.find((user) => user.id === field.value)?.email ||
+                                ? users.find((user) => user.id === field.value)
+                                    ?.name ||
+                                  users.find((user) => user.id === field.value)
+                                    ?.email ||
                                   "Select student"
                                 : "Select student"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -241,8 +259,8 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command shouldFilter={false}>
-                            <CommandInput 
-                              placeholder="Search student by name..." 
+                            <CommandInput
+                              placeholder="Search student by name..."
                               value={searchTerm}
                               onValueChange={setSearchTerm}
                             />
@@ -270,12 +288,16 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                                             "mr-2 h-4 w-4",
                                             user.id === field.value
                                               ? "opacity-100"
-                                              : "opacity-0"
+                                              : "opacity-0",
                                           )}
                                         />
                                         <div className="flex flex-col">
-                                          <span>{user.name || "Unknown Name"}</span>
-                                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                                          <span>
+                                            {user.name || "Unknown Name"}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {user.email}
+                                          </span>
                                         </div>
                                       </CommandItem>
                                     ))}
@@ -351,19 +373,22 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                     </div>
                     {form.getValues("certificatImage") && (
                       <div className="mt-2 text-sm font-medium text-green-600">
-                        Selected: {(form.getValues("certificatImage") as File).name}
+                        Selected:{" "}
+                        {(form.getValues("certificatImage") as File).name}
                       </div>
                     )}
                   </div>
                 </div>
-                
+
                 {/* Preview */}
                 {filePreview && (
                   <div className="mt-4 border rounded-lg overflow-hidden max-w-md">
-                    <img 
-                      src={filePreview} 
-                      alt="Certificate Preview" 
+                    <Image
+                      src={filePreview}
+                      alt="Certificate Preview"
                       className="w-full h-auto object-contain"
+                      height={100}
+                      width={100}
                     />
                   </div>
                 )}

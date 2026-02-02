@@ -8,12 +8,21 @@ const CreateCertificatePage = async ({
 }: {
   searchParams: TSearchParams;
 }) => {
-  let query = await searchParams;
-  query = { ...query, role: "STUDENT" };
-  const result = await getAllUsers(query);
-  const courses = await getAllCourses();
-  console.log(result);
-  console.log(courses);
+  const query = await searchParams;
+  const userQuery = {
+    ...query,
+    role: "STUDENT",
+    limit: 10,
+  };
+
+  const [usersResult, courseResult] = await Promise.all([
+    getAllUsers(userQuery),
+    getAllCourses({ limit: 1000 }),
+  ]);
+
+  const users = usersResult?.data || [];
+  const courses = courseResult?.data || [];
+
   return (
     <section>
       <CreateCertificate users={users} courses={courses} />
