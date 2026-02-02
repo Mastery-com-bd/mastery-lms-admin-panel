@@ -16,7 +16,7 @@ const CreateCertificatePage = async ({
   console.log(courses);
   return (
     <section>
-      <CreateCertificate />
+      <CreateCertificate users={users} courses={courses} />
     </section>
   );
 };

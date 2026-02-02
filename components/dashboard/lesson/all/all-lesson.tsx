@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-  Loader2,
   RefreshCcw,
   Search,
 } from "lucide-react";
@@ -31,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
 // Types based on API response
@@ -63,35 +63,51 @@ interface Meta {
   total: number;
 }
 
-const AllLesson = () => {
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+const AllLesson = ({ lessons, meta }: { lessons: Lesson[]; meta: Meta }) => {
   const [sections, setSections] = useState<Section[]>([]);
-  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 10, total: 0 });
-  const [loading, setLoading] = useState(false);
 
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [sectionId, setSectionId] = useState<string>("all");
-  const [isPreview, setIsPreview] = useState<string>("all");
-  const [sortBy, setSortBy] = useState("order");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // Debounce search
+  // Derived state from URL
+  const sectionId = searchParams.get("sectionId") || "all";
+  const sortBy = searchParams.get("sortBy") || "order";
+  const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "asc";
+  const searchTermParam = searchParams.get("searchTerm") || "";
+
+  // Local state for search input to allow typing
+  const [searchTerm, setSearchTerm] = useState(searchTermParam);
+
+  // Sync local search term with URL param
+  useEffect(() => {
+    setSearchTerm(searchTermParam);
+  }, [searchTermParam]);
+
+  // Debounce search update to URL
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
+      if (searchTerm !== searchTermParam) {
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchTerm) {
+          params.set("searchTerm", searchTerm);
+        } else {
+          params.delete("searchTerm");
+        }
+        params.set("page", "1"); // Reset page on search
+        router.push(`${pathname}?${params.toString()}`);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, router, pathname, searchParams, searchTermParam]);
 
-  // Fetch Sections for filter
+  // Fetch Sections for filter (Keep client-side fetching as requested)
   useEffect(() => {
     const fetchSections = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/section?limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/section?limit=100`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -104,82 +120,45 @@ const AllLesson = () => {
     fetchSections();
   }, []);
 
-  // Fetch Lessons
-  const fetchLessons = useCallback(async () => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        page: meta.page.toString(),
-        limit: meta.limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-
-      if (debouncedSearch) {
-        queryParams.append("searchTerm", debouncedSearch);
-      }
-
-      if (sectionId !== "all") {
-        queryParams.append("sectionId", sectionId);
-      }
-
-      if (isPreview !== "all") {
-        queryParams.append("isPreview", isPreview);
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?${queryParams.toString()}`,
-        { cache: "no-store" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch lessons");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setLessons(data.data || []);
-        setMeta(data.meta || { page: 1, limit: 10, total: 0 });
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load lessons");
-    } finally {
-      setLoading(false);
-    }
-  }, [meta.page, meta.limit, debouncedSearch, sectionId, isPreview, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
-
   const handleSort = (field: string) => {
+    const params = new URLSearchParams(searchParams.toString());
     if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      params.set("sortOrder", sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortBy(field);
-      setSortOrder("asc");
+      params.set("sortBy", field);
+      params.set("sortOrder", "asc");
     }
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
-    setMeta((prev) => ({ ...prev, page: newPage }));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleDelete = async (lessonId: string) => {
     try {
       showLoading("Deleting lesson...");
-      await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson/${lessonId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/lesson/${lessonId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       toast.dismiss();
       showSuccess({ message: "Lesson deleted successfully" });
-      fetchLessons(); // Refresh the lesson list
+      router.refresh();
     } catch (error) {
       console.error(error);
       showError({ message: "Failed to delete lesson" });
@@ -209,7 +188,10 @@ const AllLesson = () => {
               />
             </div>
 
-            <Select value={sectionId} onValueChange={setSectionId}>
+            <Select
+              value={sectionId}
+              onValueChange={(val) => handleFilterChange("sectionId", val)}
+            >
               <SelectTrigger className="w-full md:w-[250px] bg-muted/30 border-none">
                 <SelectValue placeholder="Filter by Section" />
               </SelectTrigger>
@@ -223,25 +205,13 @@ const AllLesson = () => {
                 ))}
               </SelectContent>
             </Select>
-
-            <Select value={isPreview} onValueChange={setIsPreview}>
-              <SelectTrigger className="w-full md:w-[150px] bg-muted/30 border-none">
-                <SelectValue placeholder="Preview Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="true">Preview</SelectItem>
-                <SelectItem value="false">Locked</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => fetchLessons()}
-              disabled={loading}
+              onClick={() => router.refresh()}
             >
               <RefreshCcw className="h-4 w-4" />
             </Button>
@@ -250,136 +220,134 @@ const AllLesson = () => {
 
         {/* Table */}
         <div className="relative w-full overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("order")}
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("order")}
+                >
+                  <div className="flex items-center gap-1">
+                    Order
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("title")}
+                >
+                  <div className="flex items-center gap-1">
+                    Title
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Section
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Duration
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Preview
+                </th>
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("createdAt")}
+                >
+                  <div className="flex items-center gap-1">
+                    Created
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {lessons.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="h-24 text-center text-muted-foreground"
                   >
-                    <div className="flex items-center gap-1">
-                      Order
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("title")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Title
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Section
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Duration
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Preview
-                  </th>
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("createdAt")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Created
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
-                    Actions
-                  </th>
+                    No lessons found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {lessons.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No lessons found.
+              ) : (
+                lessons.map((lesson) => (
+                  <tr
+                    key={lesson.id}
+                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  >
+                    <td className="p-4 align-middle font-medium">
+                      {lesson.order}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col max-w-[300px]">
+                        <span
+                          className="font-medium truncate"
+                          title={lesson.title}
+                        >
+                          {lesson.title}
+                        </span>
+                        <span
+                          className="text-xs text-muted-foreground truncate"
+                          title={lesson.description}
+                        >
+                          {lesson.description}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {lesson.section?.title || "Unknown Section"}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {lesson.duration} min
+                    </td>
+                    <td className="p-4 align-middle">
+                      <Badge
+                        variant={lesson.isPreview ? "default" : "secondary"}
+                      >
+                        {lesson.isPreview ? "Preview" : "Locked"}
+                      </Badge>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {new Date(lesson.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 align-middle text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/dashboard/lesson/update/${lesson.id}`}
+                            >
+                              Edit lesson
+                            </Link>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:bg-rose-600 focus:text-white"
+                            onClick={() => handleDelete(lesson.id)}
+                          >
+                            Delete lesson
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
-                ) : (
-                  lessons.map((lesson) => (
-                    <tr
-                      key={lesson.id}
-                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                    >
-                      <td className="p-4 align-middle font-medium">
-                        {lesson.order}
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col max-w-[300px]">
-                          <span
-                            className="font-medium truncate"
-                            title={lesson.title}
-                          >
-                            {lesson.title}
-                          </span>
-                          <span
-                            className="text-xs text-muted-foreground truncate"
-                            title={lesson.description}
-                          >
-                            {lesson.description}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        {lesson.section?.title || "Unknown Section"}
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        {lesson.duration} min
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge variant={lesson.isPreview ? "default" : "secondary"}>
-                          {lesson.isPreview ? "Preview" : "Locked"}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        {new Date(lesson.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 align-middle text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/lesson/update/${lesson.id}`}>
-                                Edit lesson
-                              </Link>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600 focus:bg-rose-600 focus:text-white"
-                              onClick={() => handleDelete(lesson.id)}
-                            >
-                              Delete lesson
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* Pagination */}
@@ -394,7 +362,7 @@ const AllLesson = () => {
               variant="outline"
               size="sm"
               className="gap-1"
-              disabled={meta.page === 1 || loading}
+              disabled={meta.page === 1}
               onClick={() => handlePageChange(meta.page - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -407,7 +375,7 @@ const AllLesson = () => {
               variant="outline"
               size="sm"
               className="gap-1"
-              disabled={meta.page >= totalPages || loading}
+              disabled={meta.page >= totalPages}
               onClick={() => handlePageChange(meta.page + 1)}
             >
               Next

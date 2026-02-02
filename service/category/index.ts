@@ -59,7 +59,7 @@ export const updateCategory = async (data: TCreateCategory, id: string) => {
   const token = await getValidToken();
   try {
     const res = await fetch(`${config.next_public_base_url}/category/${id}`, {
-      method: "POST",
+      method: "PATCH",
       headers: {
         Authorization: token,
         "Content-Type": "application/json",

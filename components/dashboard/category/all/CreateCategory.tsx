@@ -48,6 +48,8 @@ const formSchema = z.object({
 });
 
 export type TCreateCategory = z.infer<typeof formSchema>;
+
+
 const CreateCategory = ({ category }: { category?: TCategory }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -204,7 +206,7 @@ const CreateCategory = ({ category }: { category?: TCategory }) => {
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create
+               {category ? "Update" : "Create"}
               </Button>
             </div>
           </form>

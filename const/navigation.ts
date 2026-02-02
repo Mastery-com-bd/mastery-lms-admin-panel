@@ -48,7 +48,7 @@ export const navigation: TNavigation[] = [
     title: "Certificates",
     icon: ShieldCheck,
     items: [
-      { title: "Issue Certificate", url: "/dashboard/certificates/create" },
+      { title: "Issue Certificate", url: "/dashboard/certificate/create" },
       { title: "All Certificate", url: "/dashboard/certificate" },
     ],
   },
@@ -76,11 +76,11 @@ export const navigation: TNavigation[] = [
     items: [
       {
         title: "All Sections",
-        url: "/dashboard/section",
+        url: "/dashboard/sections",
       },
       {
         title: "Create Section",
-        url: "/dashboard/section/create",
+        url: "/dashboard/sections/create",
       },
     ],
   },

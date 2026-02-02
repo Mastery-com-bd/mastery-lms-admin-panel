@@ -26,7 +26,7 @@ const AllCertificate = ({
         <h1 className="text-2xl font-semibold tracking-tight">
           All Certificate
         </h1>
-        <Link href="/dashboard/certificates/create">
+        <Link href="/dashboard/certificate/create">
           <Button className="cursor-pointer">Issue Certificate</Button>
         </Link>
       </div>

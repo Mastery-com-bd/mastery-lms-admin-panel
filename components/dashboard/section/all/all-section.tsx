@@ -1,15 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUpDown,
-  Loader2,
-  RefreshCcw,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -26,9 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import {
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  RefreshCcw
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Types based on API response
 interface Course {
@@ -53,16 +53,23 @@ interface Meta {
   total: number;
 }
 
-const AllSection = () => {
-  const [sections, setSections] = useState<Section[]>([]);
+const AllSection = ({
+  sections,
+  meta,
+}: {
+  sections: Section[];
+  meta: Meta;
+}) => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 10, total: 0 });
-  const [loading, setLoading] = useState(false);
+  
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // Filters state
-  const [courseId, setCourseId] = useState<string>("all");
-  const [sortBy, setSortBy] = useState("order");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  // Derived state from URL
+  const courseId = searchParams.get("courseId") || "all";
+  const sortBy = searchParams.get("sortBy") || "order";
+  const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "asc";
 
   // Fetch Courses for filter
   useEffect(() => {
@@ -73,7 +80,6 @@ const AllSection = () => {
         );
         if (response.ok) {
           const data = await response.json();
-
           setCourses(data.data || []);
         }
       } catch (error) {
@@ -83,60 +89,32 @@ const AllSection = () => {
     fetchCourses();
   }, []);
 
-  // Fetch Sections
-  const fetchSections = useCallback(async () => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        page: meta.page.toString(),
-        limit: meta.limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-
-      if (courseId !== "all") {
-        queryParams.append("courseId", courseId);
-      }
-
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_SERVER_URL
-        }/section?${queryParams.toString()}`,
-        { cache: "no-store" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch sections");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setSections(data.data || []);
-        setMeta(data.meta || { page: 1, limit: 10, total: 0 });
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load sections");
-    } finally {
-      setLoading(false);
-    }
-  }, [meta.page, meta.limit, courseId, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchSections();
-  }, [fetchSections]);
-
   const handleSort = (field: string) => {
+    const params = new URLSearchParams(searchParams.toString());
     if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      params.set("sortOrder", sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortBy(field);
-      setSortOrder("asc");
+      params.set("sortBy", field);
+      params.set("sortOrder", "asc");
     }
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
-    setMeta((prev) => ({ ...prev, page: newPage }));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleFilterChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set("courseId", value);
+    } else {
+      params.delete("courseId");
+    }
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleDelete = async (sectionId: string) => {
@@ -152,7 +130,7 @@ const AllSection = () => {
 
       toast.dismiss();
       showSuccess({ message: "Section deleted successfully" });
-      fetchSections(); // Refresh the section list
+      router.refresh();
     } catch (error) {
       console.error(error);
       showError({ message: "Failed to delete section" });
@@ -171,7 +149,7 @@ const AllSection = () => {
         {/* Filters Bar */}
         <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between border-b">
           <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
-            <Select value={courseId} onValueChange={setCourseId}>
+            <Select value={courseId} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-full md:w-[250px] bg-muted/30 border-none">
                 <SelectValue placeholder="Filter by Course" />
               </SelectTrigger>
@@ -190,8 +168,7 @@ const AllSection = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => fetchSections()}
-              disabled={loading}
+              onClick={() => router.refresh()}
             >
               <RefreshCcw className="h-4 w-4" />
             </Button>
@@ -200,12 +177,7 @@ const AllSection = () => {
 
         {/* Table */}
         <div className="relative w-full overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
+          <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b">
                 <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                   <th
@@ -315,7 +287,6 @@ const AllSection = () => {
                 )}
               </tbody>
             </table>
-          )}
         </div>
 
         {/* Pagination */}
@@ -330,7 +301,7 @@ const AllSection = () => {
               variant="outline"
               size="sm"
               className="gap-1"
-              disabled={meta.page === 1 || loading}
+              disabled={meta.page === 1}
               onClick={() => handlePageChange(meta.page - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -343,7 +314,7 @@ const AllSection = () => {
               variant="outline"
               size="sm"
               className="gap-1"
-              disabled={meta.page >= totalPages || loading}
+              disabled={meta.page >= totalPages}
               onClick={() => handlePageChange(meta.page + 1)}
             >
               Next
