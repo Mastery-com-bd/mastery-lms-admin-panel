@@ -32,3 +32,30 @@ export const getAllUsers = async (query?: TQuery) => {
     return Error(error);
   }
 };
+
+export const getEligebleStudents = async (id: string) => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+    if (!token) {
+      throw new Error("you are not authorized");
+    }
+    const res = await fetch(
+      `${config.next_public_base_url}/certificate/eligible/${id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+        next: {
+          tags: ["Users"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};

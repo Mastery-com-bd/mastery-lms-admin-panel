@@ -52,10 +52,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { showError, showLoading, showSuccess } from "@/lib/toast";
-import { config } from "@/config";
+import { showError } from "@/lib/toast";
 import { getAllUsers } from "@/service/user";
 import Image from "next/image";
+import { createCertificate } from "@/service/certificate";
 
 // Define simplified interfaces for props
 interface User {
@@ -85,7 +85,6 @@ const CreateCertificate = ({
   courses,
 }: CreateCertificateProps) => {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   // States for student search
@@ -157,46 +156,31 @@ const CreateCertificate = ({
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    showLoading("Creating certificate...");
+    const toastId = toast.loading("creating certificate");
 
     try {
       const formData = new FormData();
+
+      // REQUIRED fields
       formData.append("userId", values.userId);
       formData.append("courseId", values.courseId);
 
+      // FILE (must be File, not string)
       if (values.certificatImage instanceof File) {
         formData.append("certificatImage", values.certificatImage);
       }
 
-      const response = await fetch(
-        `${config.next_public_base_url}/certificate`,
-        {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        },
-      );
+      const result = await createCertificate(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create certificate");
+      if (result?.success) {
+        toast.success(result.message, { id: toastId });
+        router.push("/dashboard/certificate");
+      } else {
+        toast.error(result?.message, { id: toastId });
       }
-
-      toast.dismiss();
-      showSuccess({ message: "Certificate created successfully" });
-      router.push("/dashboard/certificate");
-      router.refresh();
     } catch (error) {
       console.error(error);
-      toast.dismiss();
-      showError({
-        message:
-          error instanceof Error ? error.message : "Something went wrong",
-      });
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Something went wrong", { id: toastId });
     }
   }
 
@@ -395,8 +379,8 @@ const CreateCertificate = ({
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
