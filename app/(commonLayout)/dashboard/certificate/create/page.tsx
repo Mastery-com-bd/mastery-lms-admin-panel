@@ -1,7 +1,7 @@
 import CreateCertificate from "@/components/dashboard/certificate/createCertificate/CreateCertificate";
 import { TSearchParams } from "../../categories/page";
-import { getAllUsers } from "@/service/user";
 import { getAllCourses } from "@/service/course";
+import { getAllUsers } from "@/service/user";
 
 const CreateCertificatePage = async ({
   searchParams,
@@ -9,19 +9,19 @@ const CreateCertificatePage = async ({
   searchParams: TSearchParams;
 }) => {
   const query = await searchParams;
-  
-  // Initial fetch with limit 10 as requested
-  const userQuery = { 
-    ...query, 
-    role: "STUDENT", 
-    limit: 10 
+  const userQuery = {
+    ...query,
+    role: "STUDENT",
+    limit: 10,
   };
 
-  const result = await getAllUsers(userQuery);
-  const coursesResult = await getAllCourses({ limit: 1000 }); // Keep courses limit high for now
-  
-  const users = result?.data || [];
-  const courses = coursesResult?.data || [];
+  const [usersResult, courseResult] = await Promise.all([
+    getAllUsers(userQuery),
+    getAllCourses({ limit: 1000 }),
+  ]);
+
+  const users = usersResult?.data || [];
+  const courses = courseResult?.data || [];
 
   return (
     <section>

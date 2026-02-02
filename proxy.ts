@@ -26,6 +26,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const userInfo = await getCurrentUser();
+
   if (!userInfo) {
     if (authRoutes.includes(pathname)) {
       await logout();
