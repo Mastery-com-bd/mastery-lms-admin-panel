@@ -51,11 +51,15 @@ export const getAllCourseElement = async (query?: TQuery) => {
 };
 
 export const getAllCourses = cache(async (query?: TQuery) => {
+  const token = await getValidToken();
   try {
     const res = await fetch(
       `${config.next_public_base_url}/course?${buildParams(query)}`,
       {
         method: "GET",
+        headers: {
+          Authorization: token,
+        },
         next: {
           tags: ["Course"],
           revalidate: 30,
