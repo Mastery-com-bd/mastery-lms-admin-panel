@@ -110,7 +110,7 @@ export const updateQuestion = async ({ payload, questionId }: {
             }
         );
         const result = await res.json();
-        revalidateTag("getQuestionDetailsById", "getAllQuestions");
+        revalidateTag("getAllQuestions", "default");
         revalidatePath("/dashboard/questions");
         return result;
     } catch (error: any) {
