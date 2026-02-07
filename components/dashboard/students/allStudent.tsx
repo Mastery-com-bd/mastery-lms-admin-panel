@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -10,40 +11,122 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { motion } from "motion/react";
 import { Input } from "@/components/ui/input";
 import {
-  Calendar,
-  ChevronDown,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   CloudDownload,
-  Filter,
   MoreHorizontal,
   Plus,
+  RefreshCcw,
   Search,
 } from "lucide-react";
-import { useState } from "react";
+import { motion } from "motion/react";
+import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-// Mock Data
-const MOCK_STUDENTS = Array.from({ length: 12 }).map((_, i) => ({
-  id: i + 1,
-  name: `Student ${i + 1}`,
-  status: i % 3 === 0 ? "Failed" : "Passed",
-  roll: `%0${(i + 1).toString().padStart(2, "0")}`,
-  address: "TA-107 Newyork",
-  class: "01",
-  dob: "02/05/2001",
-  phone: "+12313546",
-  avatar: `https://i.pravatar.cc/150?u=${i + 1}`,
-}));
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  profilePhoto: string;
+  address: string;
+  role: string;
+  status: string;
+  dateOfBirth: string;
+  isEmailVerified: boolean;
+}
 
-const TABS = ["cat1", "cat2", "cat3", "cat4"];
+interface Meta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages?: number;
+}
 
-const AllStudent = () => {
-  const [activeTab, setActiveTab] = useState("cat1");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+const AllStudent = ({ users, meta }: { users: User[]; meta: Meta }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Derived state from URL
+  const page = Number(searchParams.get("page")) || 1;
+  const searchTermParam = searchParams.get("searchTerm") || "";
+  const statusFilter = searchParams.get("status") || "all";
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const sortOrder = searchParams.get("sortOrder") || "desc";
+
+  // Local state for search input
+  const [searchTerm, setSearchTerm] = useState(searchTermParam);
+
+  // Sync local search term with URL param
+  useEffect(() => {
+    setSearchTerm(searchTermParam);
+  }, [searchTermParam]);
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchTermParam) {
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchTerm) {
+          params.set("searchTerm", searchTerm);
+        } else {
+          params.delete("searchTerm");
+        }
+        params.set("page", "1"); // Reset page on search
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, router, pathname, searchParams, searchTermParam]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleSort = (field: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (sortBy === field) {
+      params.set("sortOrder", sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      params.set("sortBy", field);
+      params.set("sortOrder", "asc");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleReset = () => {
+    router.push(pathname);
+  };
+
+  const totalPages = meta?.total
+    ? Math.ceil(meta.total / (meta.limit || 10))
+    : 1;
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8">
@@ -58,16 +141,9 @@ const AllStudent = () => {
           List of students
         </h1>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 bg-emerald-900 text-white hover:bg-emerald-800 hover:text-white border-none"
-          >
-            <CloudDownload className="h-4 w-4" />
-            Students
-          </Button>
-          <Button className="gap-2 bg-emerald-900 text-white hover:bg-emerald-800">
-            <Plus className="h-4 w-4" />
-            Students
+          <Button variant="outline" onClick={handleReset} className="gap-2">
+            <RefreshCcw className="h-4 w-4" />
+            Reset
           </Button>
         </div>
       </motion.div>
@@ -80,60 +156,50 @@ const AllStudent = () => {
           transition={{ duration: 0.3, delay: 0.1 }}
           className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b"
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            {/* Tabs */}
-            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg overflow-x-auto">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                    activeTab === tab
-                      ? "bg-white text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
+          <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
             {/* Search */}
-            <div className="relative w-full md:w-62.5">
+            <div className="relative w-full md:w-72">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search by name"
+                placeholder="Search by name or email..."
                 className="pl-9 bg-muted/30 border-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <Button
-              variant="outline"
-              className="gap-2 border-none bg-muted/30 text-muted-foreground font-normal"
+            {/* Status Filter */}
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => handleFilterChange("status", value)}
             >
-              Class 9
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 border-none bg-muted/30 text-muted-foreground font-normal"
+              <SelectTrigger className="w-full md:w-40 border-none bg-muted/30">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="BLOCKED">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Email Verified Filter */}
+            <Select
+              value={searchParams.get("isEmailVerified") || "all"}
+              onValueChange={(value) =>
+                handleFilterChange("isEmailVerified", value)
+              }
             >
-              <Calendar className="h-4 w-4 opacity-50" />
-              Last 30 days
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground"
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
+              <SelectTrigger className="w-full md:w-40 border-none bg-muted/30">
+                <SelectValue placeholder="Email Verified" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="true">Verified</SelectItem>
+                <SelectItem value="false">Not Verified</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </motion.div>
 
@@ -148,16 +214,27 @@ const AllStudent = () => {
             <thead className="[&_tr]:border-b">
               <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                  Name
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("fullName")}
+                    className="flex items-center gap-1 p-0 hover:bg-transparent"
+                  >
+                    Name
+                    <ArrowUpDown className="h-3 w-3" />
+                  </Button>
                 </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                  Roll
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("email")}
+                    className="flex items-center gap-1 p-0 hover:bg-transparent"
+                  >
+                    Email
+                    <ArrowUpDown className="h-3 w-3" />
+                  </Button>
                 </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                   Address
-                </th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                  Class
                 </th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                   Date of birth
@@ -165,76 +242,110 @@ const AllStudent = () => {
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                   Phone
                 </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Status
+                </th>
                 <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="[&_tr:last-child]:border-0">
-              {MOCK_STUDENTS.map((student, idx) => (
-                <motion.tr
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 + idx * 0.1 }}
-                  key={student.id}
-                  className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                >
-                  <td className="p-4 align-middle">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-10 w-10 overflow-hidden rounded-full">
-                        <img
-                          src={student.avatar}
-                          alt={student.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{student.name}</span>
-                        <span className="text-xs text-muted-foreground hidden sm:inline-block">
-                          {student.status === "Failed" && (
-                            <span className="text-red-500">Failed</span>
+              {users.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    No students found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((student, idx) => (
+                  <motion.tr
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 + idx * 0.1 }}
+                    key={student.id}
+                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  >
+                    <td className="p-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 overflow-hidden rounded-full bg-muted">
+                          {student.profilePhoto ? (
+                            <Image
+                              src={student.profilePhoto}
+                              alt={student.fullName}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary font-medium">
+                              {student.fullName?.charAt(0) || "U"}
+                            </div>
                           )}
-                        </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {student.fullName}
+                          </span>
+                        </div>
                       </div>
-                      {/* Mobile Only Status - if needed layout adjustment */}
-                    </div>
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground">
-                    {student.roll}
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground whitespace-nowrap">
-                    {student.address}
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground">
-                    {student.class}
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground">
-                    {student.dob}
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground">
-                    {student.phone}
-                  </td>
-                  <td className="p-4 align-middle text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit student</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          Delete student
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      <div className="flex flex-col">
+                        <span>{student.email}</span>
+                        {student.isEmailVerified && (
+                          <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5">
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground whitespace-nowrap">
+                      {student.address || "N/A"}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {student.dateOfBirth
+                        ? new Date(student.dateOfBirth).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {student.phoneNumber || "N/A"}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <Badge
+                        variant={
+                          student.status === "ACTIVE"
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
+                        {student.status}
+                      </Badge>
+                    </td>
+                    <td className="p-4 align-middle text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>View details</DropdownMenuItem>
+                          <DropdownMenuItem>Edit student</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600">
+                            Delete student
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
             </tbody>
           </table>
         </motion.div>
@@ -242,63 +353,26 @@ const AllStudent = () => {
         {/* Pagination */}
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between border-t">
           <div className="text-sm text-muted-foreground">
-            1 of 12 members shows
+            Page {page} of {totalPages}
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               className="gap-1 text-muted-foreground"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              onClick={() => handlePageChange(page - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <div className="flex items-center gap-1">
-              <Button
-                variant={currentPage === 1 ? "outline" : "ghost"}
-                size="sm"
-                className={`h-8 w-8 p-0 ${
-                  currentPage === 1
-                    ? "bg-white text-black border-slate-200"
-                    : "text-muted-foreground"
-                }`}
-                onClick={() => setCurrentPage(1)}
-              >
-                1
-              </Button>
-              <Button
-                variant={currentPage === 2 ? "outline" : "ghost"}
-                size="sm"
-                className={`h-8 w-8 p-0 ${
-                  currentPage === 2
-                    ? "bg-white text-black border-slate-200"
-                    : "text-muted-foreground"
-                }`}
-                onClick={() => setCurrentPage(2)}
-              >
-                2
-              </Button>
-              <Button
-                variant={currentPage === 3 ? "outline" : "ghost"}
-                size="sm"
-                className={`h-8 w-8 p-0 ${
-                  currentPage === 3
-                    ? "bg-white text-black border-slate-200"
-                    : "text-muted-foreground"
-                }`}
-                onClick={() => setCurrentPage(3)}
-              >
-                3
-              </Button>
-              <span className="text-muted-foreground px-2">...</span>
-            </div>
+
             <Button
               variant="ghost"
               size="sm"
               className="gap-1 text-muted-foreground"
-              onClick={() => setCurrentPage((p) => p + 1)}
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(page + 1)}
             >
               Next
               <ChevronRight className="h-4 w-4" />
