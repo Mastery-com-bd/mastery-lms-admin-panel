@@ -34,6 +34,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { createLiveClass } from "@/service/live-class";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -75,12 +77,9 @@ export default function CreateLiveClass() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
+        const res = await getAllCoursesWithoutLimit();
+        if (res.success) {
+          setCourses(res.data || []);
         }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
@@ -109,29 +108,17 @@ export default function CreateLiveClass() {
 
       console.log("Live class creation request body:", body);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/live-class`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await createLiveClass(body);
 
-      console.log(await response.json());
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to create live class");
+      if (res.success) {
+        showSuccess({
+          message: res.message || "Live class created successfully",
+        });
+      } else{
+        showError({
+          message: res.message || "Failed to create live class",
+        });
       }
-
-      toast.dismiss();
-      const data = await response.json().catch(() => null);
-      showSuccess({
-        message: data?.message || "Live class created successfully",
-      });
 
       form.reset({
         courseId: "",

@@ -1,3 +1,6 @@
+"use server"
+
+
 import { config } from "@/config";
 import { buildParams } from "@/utills/paramsBuilder";
 import { cache } from "react";
@@ -6,25 +9,35 @@ import { getValidToken } from "../auth/validToken";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export const getAllLiveClasses = cache(async (query?: TQuery) => {
-    try {
-        const res = await fetch(
-            `${config.next_public_base_url}/live-class?${buildParams(query)}`,
-            {
-                method: "GET",
-                next: {
-                    tags: ["LiveClass"],
-                    revalidate: 30,
-                },
-            },
-        );
-        const result = await res.json();
-        return result;
-    } catch (error: any) {
-        return Error(error);
-    }
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/live-class?${buildParams(query)}`,
+      {
+        method: "GET",
+        next: {
+          tags: ["LiveClass"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
 });
 
-export const createLiveClass = async (data: FormData) => {
+export const createLiveClass = async (data: {
+  courseId: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string | undefined;
+  duration: number;
+  meetingUrl: string | undefined;
+  meetingId: string | undefined;
+  meetingPassword: string | undefined;
+}) => {
   const token = await getValidToken();
   try {
     const res = await fetch(`${config.next_public_base_url}/live-class`, {
@@ -32,7 +45,7 @@ export const createLiveClass = async (data: FormData) => {
       headers: {
         Authorization: token,
       },
-      body: data,
+      body: JSON.stringify(data),
     });
     const result = await res.json();
     revalidateTag("LiveClass", "default");

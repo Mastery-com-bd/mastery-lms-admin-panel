@@ -64,10 +64,6 @@ export const navigation: TNavigation[] = [
         title: "Create Course",
         url: "/dashboard/courses/create",
       },
-      {
-        title: "Course Reviews",
-        url: "/dashboard/courses/reviews",
-      },
     ],
   },
   {

@@ -32,11 +32,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-
-
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { createQuestion } from "@/service/questions";
 
 interface Quiz {
   id: string;
@@ -100,7 +109,7 @@ export default function CreateQuestion() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz?${params.toString()}`,
           {
             credentials: "include",
-          }
+          },
         );
         if (!response.ok) {
           throw new Error("Failed to fetch quizzes");
@@ -153,28 +162,17 @@ export default function CreateQuestion() {
 
       console.log("Submission body:", body);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz-question`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(errorData.message || "Failed to create question");
-      }
-
+      const res = await createQuestion(body);
       toast.dismiss();
-      showSuccess({
-        message: "Question created successfully",
-      });
+      if (res.success) {
+        showSuccess({
+          message: res.message || "Question created successfully",
+        });
+      } else {
+        showError({
+          message: res.message || "Failed to create question",
+        });
+      }
 
       const nextOrder = (Number(values.order) || 0) + 1;
 
@@ -318,13 +316,13 @@ export default function CreateQuestion() {
                                     role="combobox"
                                     className={cn(
                                       "w-full justify-between",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
                                     )}
                                     disabled={loadingQuizzes}
                                   >
                                     {field.value
                                       ? quizzes.find(
-                                          (quiz) => quiz.id === field.value
+                                          (quiz) => quiz.id === field.value,
                                         )?.title
                                       : "Select a quiz"}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -353,7 +351,7 @@ export default function CreateQuestion() {
                                             "mr-2 h-4 w-4",
                                             quiz.id === field.value
                                               ? "opacity-100"
-                                              : "opacity-0"
+                                              : "opacity-0",
                                           )}
                                         />
                                         {quiz.title}
@@ -537,8 +535,8 @@ export default function CreateQuestion() {
                                       prev.map((opt) =>
                                         opt.id === option.id
                                           ? { ...opt, text: newText }
-                                          : opt
-                                      )
+                                          : opt,
+                                      ),
                                     );
                                     setOptionsError(null);
                                   }}

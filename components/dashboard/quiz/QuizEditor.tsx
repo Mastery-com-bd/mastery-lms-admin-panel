@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { createQuiz } from "@/service/quiz";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import { motion } from "motion/react";
@@ -73,15 +75,13 @@ export function QuizEditor() {
   const selectedCourseId = form.watch("courseId");
 
   useEffect(() => {
+    // Fetch All Course
     const fetchCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
+        const response = await getAllCoursesWithoutLimit();
+        if (response.success) {
+          setCourses(response.data || []);
         }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
@@ -102,7 +102,7 @@ export function QuizEditor() {
       setLoadingLessons(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?courseId=${selectedCourseId}&limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?courseId=${selectedCourseId}&limit=100`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -133,37 +133,26 @@ export function QuizEditor() {
         timeLimit: values.timeLimit ?? 1,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(errorData.message || "Failed to create quiz");
-      }
-
+      const res = await createQuiz(body);
       toast.dismiss();
-      showSuccess({ message: "Quiz created successfully" });
-      form.reset({
-        courseId: "",
-        lessonId: "",
-        title: "",
-        description: "",
-        type: "LESSON",
-        passingScore: 70,
-        timeLimit: null,
-      });
-      router.refresh();
-      setLessons([]);
+
+      console.log("Quiz Create Response :", res)
+
+      if (res.success) {
+        showSuccess({ message: res.message || "Quiz created successfully" });
+        router.push("/dashboard/quiz");
+        form.reset({
+          courseId: "",
+          lessonId: "",
+          title: "",
+          description: "",
+          type: "LESSON",
+          passingScore: 70,
+          timeLimit: null,
+        });
+      } else {
+        showError({ message: res.message || "Failed to create quiz" });
+      }
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -327,8 +316,8 @@ export function QuizEditor() {
                                   !selectedCourseId
                                     ? "Select a course first"
                                     : loadingLessons
-                                    ? "Loading lessons..."
-                                    : "Select a lesson"
+                                      ? "Loading lessons..."
+                                      : "Select a lesson"
                                 }
                               />
                             </SelectTrigger>
@@ -394,7 +383,7 @@ export function QuizEditor() {
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             )
                           }
                           min={1}
@@ -422,7 +411,7 @@ export function QuizEditor() {
                           value={field.value}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : 0
+                              e.target.value ? Number(e.target.value) : 0,
                             )
                           }
                         />

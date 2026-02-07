@@ -34,12 +34,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { createSection } from "@/service/sections";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  order: z.string().min(1, "Order must be a positive number"),
+  order: z.string().optional(),
 });
 
 export default function CreateSection() {
@@ -53,25 +55,27 @@ export default function CreateSection() {
       courseId: "",
       title: "",
       description: "",
-      order: "",
+      order: "1",
     },
   });
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
+        const res = await getAllCoursesWithoutLimit();
+        toast.dismiss();
+
+        if (res.success) {
+          setCourses(res.data || []);
+        } else {
+          toast.error(res.message || "Failed to load courses");
         }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
-        toast.error("Failed to load courses");
       }
     };
+    fetchCourses();
+
     fetchCourses();
   }, []);
 
@@ -80,38 +84,31 @@ export default function CreateSection() {
     showLoading("Creating section...");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/section`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            ...values,
-            order: Number(values.order),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(errorData.message || "Failed to create section");
-      }
+      const res = await createSection({
+        payload: {
+          ...values,
+          order: Number(values.order),
+        },
+      });
 
       toast.dismiss();
-      showSuccess({
-        message: "Section created successfully",
-      });
-      form.reset({
-        courseId: values.courseId, // Keep the selected course
-        title: "",
-        description: "",
-        order: (Number(values.order) + 1).toString(), // Auto-increment order
-      });
-      router.refresh();
+
+      if (res.success) {
+        showSuccess({
+          message: res.message || "Section created successfully",
+        });
+        router.push(`/dashboard/sections`);
+      } else {
+        toast.error(res.message || "Failed to create section");
+      }
+
+      // form.reset({
+      //   courseId: values.courseId, // Keep the selected course
+      //   title: "",
+      //   description: "",
+      //   order: (Number(values.order) + 1).toString(), // Auto-increment order
+      // });
+      // router.refresh();
     } catch (error) {
       console.error(error);
       toast.dismiss();
