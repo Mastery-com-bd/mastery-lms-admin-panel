@@ -10,6 +10,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 export const getAllLiveClasses = cache(async (query?: TQuery) => {
   try {
+    const token = await getValidToken();
     const res = await fetch(
       `${config.next_public_base_url}/live-class?${buildParams(query)}`,
       {
@@ -17,6 +18,9 @@ export const getAllLiveClasses = cache(async (query?: TQuery) => {
         next: {
           tags: ["LiveClass"],
           revalidate: 30,
+        },
+        headers: {
+          Authorization: token,
         },
       },
     );
