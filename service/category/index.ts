@@ -13,7 +13,7 @@ export type TQuery = {
 };
 
 export const getAllCategories = async (query?: TQuery) => {
-  // const token = await getValidToken();
+
   try {
     const res = await fetch(
       `${config.next_public_base_url}/category?${buildParams(query)}`,

@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { useRouter } from "next/navigation";
+import { getQuestionDetailsById, updateQuestion } from "@/service/questions";
 
 const formSchema = z.object({
   question: z.string().min(5, "Question must be at least 5 characters"),
@@ -90,17 +91,14 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
     const fetchQuestion = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz-question/${questionId}`
-        );
+        const response = await getQuestionDetailsById(questionId);
+        console.log("Question Data :", response);
 
-        if (!response.ok) {
+        if (!response.success) {
           throw new Error("Failed to fetch question details");
         }
 
-        const data = await response.json();
-        const questionData: QuizQuestionResponse =
-          data.data || data;
+        const questionData: QuizQuestionResponse = response.data || response;
 
         const options = questionData.options || [];
 
@@ -113,7 +111,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
           correctAnswer: String(
             typeof questionData.correctAnswer === "number"
               ? questionData.correctAnswer
-              : 0
+              : 0,
           ),
           explanation: questionData.explanation || "",
           points: String(questionData.points ?? 5),
@@ -170,31 +168,23 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
         points: Number(values.points),
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz-question/${questionId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || "Failed to update question"
-        );
-      }
-
-      toast.dismiss();
-      const resData = await response.json().catch(() => null);
-      router.push(`/dashboard/questions`);
-      showSuccess({
-        message: resData?.message || "Question updated successfully",
+      const res = await updateQuestion({
+        payload: body,
+        questionId,
       });
+
+      if (res.success) {
+        toast.dismiss();
+        router.push(`/dashboard/questions`);
+        showSuccess({
+          message: res?.message || "Question updated successfully",
+        });
+      } else {
+        toast.dismiss();
+        showError({
+          message: res?.message || "Failed to update question",
+        });
+      }
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -209,7 +199,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
+      <div className="flex justify-center items-center min-h-100">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -298,10 +288,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
                       <FormItem>
                         <FormLabel>Option A</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Enter option A"
-                            {...field}
-                          />
+                          <Input placeholder="Enter option A" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -314,10 +301,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
                       <FormItem>
                         <FormLabel>Option B</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Enter option B"
-                            {...field}
-                          />
+                          <Input placeholder="Enter option B" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -330,10 +314,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
                       <FormItem>
                         <FormLabel>Option C</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Enter option C"
-                            {...field}
-                          />
+                          <Input placeholder="Enter option C" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -346,10 +327,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
                       <FormItem>
                         <FormLabel>Option D</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Enter option D"
-                            {...field}
-                          />
+                          <Input placeholder="Enter option D" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -418,12 +396,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
                   <FormItem className="max-w-[200px]">
                     <FormLabel>Points</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="5"
-                        {...field}
-                      />
+                      <Input type="number" min={1} placeholder="5" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

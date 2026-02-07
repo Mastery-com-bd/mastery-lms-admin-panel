@@ -32,6 +32,7 @@ import { showError, showLoading, showSuccess } from "@/lib/toast";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { deleteLesson } from "@/service/lessons";
 
 // Types based on API response
 interface Section {
@@ -151,14 +152,14 @@ const AllLesson = ({ lessons, meta }: { lessons: Lesson[]; meta: Meta }) => {
   const handleDelete = async (lessonId: string) => {
     try {
       showLoading("Deleting lesson...");
-      await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/lesson/${lessonId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const res = await deleteLesson(lessonId);
 
       toast.dismiss();
-      showSuccess({ message: "Lesson deleted successfully" });
-      router.refresh();
+      if (res.success) {
+        showSuccess({ message: res.message || "Lesson deleted successfully" });
+      } else {
+        showError({ message: res.message || "Failed to delete lesson" });
+      }
     } catch (error) {
       console.error(error);
       showError({ message: "Failed to delete lesson" });

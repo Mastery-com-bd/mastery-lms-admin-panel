@@ -64,10 +64,6 @@ export const navigation: TNavigation[] = [
         title: "Create Course",
         url: "/dashboard/courses/create",
       },
-      {
-        title: "Course Reviews",
-        url: "/dashboard/courses/reviews",
-      },
     ],
   },
   {
@@ -179,45 +175,13 @@ export const navigation: TNavigation[] = [
     ],
   },
   {
-    title: "Students",
-    icon: GraduationCap,
-    items: [
-      {
-        title: "All Students",
-        url: "/dashboard/students",
-      },
-      {
-        title: "Enrollments",
-        url: "/dashboard/students/enrollments",
-      },
-      {
-        title: "Progress",
-        url: "/dashboard/students/progress",
-      },
-    ],
-  },
-  {
-    title: "Quiz & Assignments",
-    icon: LightbulbIcon,
-    items: [
-      {
-        title: "All Quizzes",
-        url: "/dashboard/quiz",
-      },
-      {
-        title: "Create Quiz",
-        url: "/dashboard/quiz/create",
-      },
-    ],
-  },
-  {
     title: "Supports",
     url: "/dashboard/supports",
     icon: Headset,
   },
   {
-    title: "Live Sessions",
-    url: "/dashboard/live-class",
-    icon: Video,
+    title: "Students",
+    url: "/dashboard/students",
+    icon: GraduationCap,
   },
 ];

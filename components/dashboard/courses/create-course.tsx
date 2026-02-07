@@ -208,6 +208,7 @@ export default function CreateCourse({
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
         form.reset();
+        router.push("/dashboard/courses");
         // setOpen(false);
         // removeImage();
       } else {

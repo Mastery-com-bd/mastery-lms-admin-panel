@@ -18,12 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { deleteSection } from "@/service/sections";
 import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  RefreshCcw
+  Plus,
+  RefreshCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -61,7 +63,7 @@ const AllSection = ({
   meta: Meta;
 }) => {
   const [courses, setCourses] = useState<Course[]>([]);
-  
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -76,7 +78,7 @@ const AllSection = ({
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -118,23 +120,16 @@ const AllSection = ({
   };
 
   const handleDelete = async (sectionId: string) => {
-    try {
-      showLoading("Deleting section...");
-      await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/section/${sectionId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+    showLoading("Deleting section...");
+    const res = await deleteSection({ sectionId });
+    toast.dismiss();
 
-      toast.dismiss();
-      showSuccess({ message: "Section deleted successfully" });
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      showError({ message: "Failed to delete section" });
+    if (res.success) {
+      showSuccess({ message: res.message || "Section deleted successfully" });
+    } else {
+      showError({ message: res.message || "Failed to delete section" });
     }
+    router.refresh();
   };
 
   const totalPages = Math.ceil(meta.total / meta.limit);
@@ -143,6 +138,9 @@ const AllSection = ({
     <div className="flex flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">All Sections</h1>
+        <Button onClick={() => router.push("/dashboard/sections/create")}>
+          Add Section <Plus className="h-4 w-4" />
+        </Button>
       </div>
 
       <Card className="border-none shadow-sm">
@@ -178,115 +176,115 @@ const AllSection = ({
         {/* Table */}
         <div className="relative w-full overflow-auto">
           <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("order")}
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("order")}
+                >
+                  <div className="flex items-center gap-1">
+                    Order
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("title")}
+                >
+                  <div className="flex items-center gap-1">
+                    Title
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  Course
+                </th>
+                <th
+                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
+                  onClick={() => handleSort("createdAt")}
+                >
+                  <div className="flex items-center gap-1">
+                    Created
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {sections.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="h-24 text-center text-muted-foreground"
                   >
-                    <div className="flex items-center gap-1">
-                      Order
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("title")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Title
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Course
-                  </th>
-                  <th
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer"
-                    onClick={() => handleSort("createdAt")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Created
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
-                    Actions
-                  </th>
+                    No sections found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {sections.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No sections found.
+              ) : (
+                sections.map((section) => (
+                  <tr
+                    key={section.id}
+                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  >
+                    <td className="p-4 align-middle font-medium">
+                      {section.order}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col max-w-[300px]">
+                        <span
+                          className="font-medium truncate"
+                          title={section.title}
+                        >
+                          {section.title}
+                        </span>
+                        <span
+                          className="text-xs text-muted-foreground truncate"
+                          title={section.description}
+                        >
+                          {section.description}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {section.course?.title || "Unknown Course"}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {new Date(section.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 align-middle text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/sections/id/${section.id}`}>
+                              Edit section
+                            </Link>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:bg-rose-600 focus:text-white"
+                            onClick={() => handleDelete(section.id)}
+                          >
+                            Delete section
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
-                ) : (
-                  sections.map((section) => (
-                    <tr
-                      key={section.id}
-                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                    >
-                      <td className="p-4 align-middle font-medium">
-                        {section.order}
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex flex-col max-w-[300px]">
-                          <span
-                            className="font-medium truncate"
-                            title={section.title}
-                          >
-                            {section.title}
-                          </span>
-                          <span
-                            className="text-xs text-muted-foreground truncate"
-                            title={section.description}
-                          >
-                            {section.description}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        {section.course?.title || "Unknown Course"}
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        {new Date(section.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 align-middle text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/section/id/${section.id}`}>
-                                Edit section
-                              </Link>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600 focus:bg-rose-600 focus:text-white"
-                              onClick={() => handleDelete(section.id)}
-                            >
-                              Delete section
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* Pagination */}
