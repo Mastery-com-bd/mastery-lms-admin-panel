@@ -232,17 +232,7 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
             )}
           </div>
         </div>
-        <div className="flex gap-3 w-full sm:w-auto">
-          <Button
-            type="submit"
-            form="update-question-form"
-            className="flex-1 sm:flex-none gap-2"
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            Save Changes
-          </Button>
-        </div>
+        
       </div>
 
       <Card>
