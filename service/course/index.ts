@@ -73,13 +73,25 @@ export const getAllCourses = cache(async (query?: TQuery) => {
   }
 });
 
+export const getCourseDetailsById = async (id: string) => {
 
+  const res = await fetch(`${config.next_public_base_url}/course/${id}`, {
+    method: "GET",
+    next: {
+      tags: [`Course-${id}`],
+      revalidate: 30,
+    },
+  });
+  const result = await res.json();
+  return result;
+
+}
 
 export const getAllCoursesWithoutLimit = cache(async () => {
   const token = await getValidToken();
   try {
     const res = await fetch(
-      `${config.next_public_base_url}/course?limit=100`,  
+      `${config.next_public_base_url}/course?limit=100`,
       {
         method: "GET",
         headers: {

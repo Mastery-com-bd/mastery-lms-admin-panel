@@ -199,7 +199,7 @@ const CreateSubject = ({ subject }: { subject?: TSubject }) => {
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create
+                {subject ? "Update" : "Create"}
               </Button>
             </div>
           </form>

@@ -39,7 +39,7 @@ import { showError, showLoading, showSuccess } from "@/lib/toast";
 
 // Constants for select options
 const COURSE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
-const LANGUAGES = ["ENGLISH", "SPANISH", "FRENCH", "GERMAN", "HINDI"];
+const LANGUAGES = ["BANGLA","ENGLISH", "SPANISH", "FRENCH", "GERMAN", "HINDI"];
 const LEARNING_TYPES = ["ONLINE", "HYBRID", "OFFLINE"];
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"];
 
@@ -74,7 +74,7 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
+    [],
   );
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const router = useRouter();
@@ -90,7 +90,7 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
       price: "",
       discountPrice: "",
       level: "BEGINNER",
-      language: "ENGLISH",
+      language: "BANGLA",
       courseLeaningType: "ONLINE",
       duration: "",
       status: "DRAFT",
@@ -109,7 +109,7 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
       try {
         // Fetch Categories
         const categoriesRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/category?limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/category?limit=100`,
         );
         if (categoriesRes.ok) {
           const data = await categoriesRes.json();
@@ -118,7 +118,7 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
 
         // Fetch Course
         const courseRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course/${courseId}`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/course/${courseId}`,
         );
         if (!courseRes.ok) {
           throw new Error("Failed to fetch course");
@@ -223,14 +223,6 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
   }
 
   if (!courseId) {

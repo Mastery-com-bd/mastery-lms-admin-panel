@@ -114,7 +114,7 @@ export const categoryTableColumn = (): ColumnDef<TCategory>[] => [
       };
 
       return (
-        <CategoryDropdown id={id} handleDelete={handleDelete}>
+        <CategoryDropdown id={id} handleDelete={handleDelete} path={`/dashboard/categories/${id}`}>
           <CreateCategory category={category} />
         </CategoryDropdown>
       );

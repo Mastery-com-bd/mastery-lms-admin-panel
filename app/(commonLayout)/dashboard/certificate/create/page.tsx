@@ -8,17 +8,11 @@ const CreateCertificatePage = async ({
 }: {
   searchParams: TSearchParams;
 }) => {
-  const query = await searchParams;
-  
-  // Initial fetch with limit 10 as requested
-  const userQuery = { 
-    ...query, 
-    role: "STUDENT", 
-    limit: 10 
-  };
+  let query = await searchParams;
+  query = { ...query, role: "STUDENT", limit: 1000 }; // Fetch enough students
 
-  const result = await getAllUsers(userQuery);
-  const coursesResult = await getAllCourses({ limit: 1000 }); // Keep courses limit high for now
+  const result = await getAllUsers(query);
+  const coursesResult = await getAllCourses({ limit: 1000 }); // Fetch enough courses
   
   const users = result?.data || [];
   const courses = coursesResult?.data || [];

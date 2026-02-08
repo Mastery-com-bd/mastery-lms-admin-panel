@@ -53,7 +53,7 @@ import { getAllUsers } from "@/service/user";
 // Define simplified interfaces for props
 interface User {
   id: string;
-  name?: string;
+  fullName?: string;
   email?: string;
 }
 
@@ -120,8 +120,7 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, initialUsers]);
-
+  }, [searchTerm]);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -231,7 +230,7 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                               )}
                             >
                               {field.value
-                                ? users.find((user) => user.id === field.value)?.name ||
+                                ? users.find((user) => user.id === field.value)?.fullName ||
                                   users.find((user) => user.id === field.value)?.email ||
                                   "Select student"
                                 : "Select student"}
@@ -274,7 +273,7 @@ const CreateCertificate = ({ users: initialUsers, courses }: CreateCertificatePr
                                           )}
                                         />
                                         <div className="flex flex-col">
-                                          <span>{user.name || "Unknown Name"}</span>
+                                          <span>{user.fullName || "Unknown Name"}</span>
                                           <span className="text-xs text-muted-foreground">{user.email}</span>
                                         </div>
                                       </CommandItem>

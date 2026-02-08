@@ -10,6 +10,8 @@ const SubjectDetailsPage = async ({
   const result = await getASingleSubject(id);
   const subject = result?.data;
 
+  console.log("Subject Details :", subject);
+
   return (
     <section>
       <SubjectDetails subject={subject} />
