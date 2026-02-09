@@ -36,7 +36,7 @@ export const bookcCategoryTableColumn = (): ColumnDef<TCategory>[] => [
             alt={name}
             className="h-10 w-10 rounded-full"
           />
-          <TooltipComponent name={name} trimedName={trimedName} />;
+          <TooltipComponent name={name} trimedName={trimedName} />
         </div>
       );
     },
