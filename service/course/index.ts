@@ -27,6 +27,25 @@ export const createCourse = async (data: FormData) => {
   }
 };
 
+export const updateCourse = async (id: string, data: FormData) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(`${config.next_public_base_url}/course/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: token,
+      },
+      body: data,
+    });
+    const result = await res.json();
+    revalidateTag("Course", "default");
+    revalidatePath("/dashboard/courses");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
 export const getAllCourseElement = async (query?: TQuery) => {
   // const token = await getValidToken();
   try {
@@ -73,13 +92,25 @@ export const getAllCourses = cache(async (query?: TQuery) => {
   }
 });
 
+export const getCourseDetailsById = async (id: string) => {
 
+  const res = await fetch(`${config.next_public_base_url}/course/${id}`, {
+    method: "GET",
+    next: {
+      tags: [`Course-${id}`],
+      revalidate: 30,
+    },
+  });
+  const result = await res.json();
+  return result;
+
+}
 
 export const getAllCoursesWithoutLimit = cache(async () => {
   const token = await getValidToken();
   try {
     const res = await fetch(
-      `${config.next_public_base_url}/course?limit=100`,  
+      `${config.next_public_base_url}/course?limit=100`,
       {
         method: "GET",
         headers: {
@@ -87,7 +118,7 @@ export const getAllCoursesWithoutLimit = cache(async () => {
         },
         next: {
           tags: ["Course"],
-          revalidate: 30,
+          revalidate: 300,
         },
       },
     );
@@ -97,5 +128,3 @@ export const getAllCoursesWithoutLimit = cache(async () => {
     return Error(error);
   }
 });
-
-

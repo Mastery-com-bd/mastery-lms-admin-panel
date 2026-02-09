@@ -125,7 +125,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
   const onSubmit = async (data: TBook) => {
     const formData = new FormData();
     const toastId = toast.loading("book creating", { duration: 3000 });
-    if (!image) {
+    if (!image && type !== "update") {
       toast.error("book image is required", { id: toastId, duration: 3000 });
       return;
     }
@@ -140,7 +140,9 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
         formData.append(key, value.toString());
       }
     });
-    formData.append("productImage", image);
+    if (image) {
+      formData.append("productImage", image);
+    }
     try {
       let result;
       if (type === "update") {
@@ -165,11 +167,20 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          form.reset();
-        }
         setOpen(isOpen);
-        removeImage();
+        if (isOpen) {
+          // Reset image state when opening
+          setImage(null);
+          if (book?.productImage) {
+            setPreview(book.productImage);
+          } else {
+            setPreview(null);
+          }
+        } else {
+          // Cleanup when closing
+          form.reset();
+          removeImage();
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -188,8 +199,10 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
       {/* 🧾 Modal Content */}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Book</DialogTitle>
-          <DialogDescription>Add a new book for courses.</DialogDescription>
+          <DialogTitle>{book ? "Update Book" : "Create Book"}</DialogTitle>
+          <DialogDescription>
+            {book ? "Update book details" : "Add a new book for courses."}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -344,6 +357,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
                     </div>
                   ) : (
                     <Input
+                      id="bookImageInput"
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
@@ -379,7 +393,7 @@ const CreateBook = ({ categories, book, type }: TCreateBookProps) => {
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create
+                {book ? "Update Book" : "Create Book"}
               </Button>
             </div>
           </form>

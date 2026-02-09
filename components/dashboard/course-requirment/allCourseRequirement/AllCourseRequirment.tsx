@@ -2,13 +2,14 @@
 
 import { TCourse } from "@/types/course.types";
 import { TMeta } from "@/types/types.meta";
-import CreateAllCourseRequirment from "./CreateAllCourseRequirment";
 import { Card } from "@/components/ui/card";
 import CustomPagination from "@/components/ui/CustomPagination";
 import AllCourseRequirmentFiltering from "./AllCourseRequirmentFiltering";
 import { courseRequirmentTableColumn } from "./CourseRequirmentTableColumn";
 import CustomTable from "@/components/ui/CustomTable";
 import { TCourseLearningData } from "@/types/courseLearning.types";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 type TAllCourseRequirmentProps = {
   course: TCourse[];
@@ -29,7 +30,9 @@ const AllCourseRequirment = ({
         <h1 className="text-2xl font-semibold tracking-tight">
           Course Requirment
         </h1>
-        <CreateAllCourseRequirment course={course} />
+        <Link href="/dashboard/course-requirment/create">
+          <Button className="cursor-pointer">Create Course Requirement</Button>
+        </Link>
       </div>
       <Card className="border-none shadow-sm py-4">
         <AllCourseRequirmentFiltering />

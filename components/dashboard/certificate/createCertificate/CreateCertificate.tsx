@@ -60,7 +60,7 @@ import Image from "next/image";
 // Define simplified interfaces for props
 interface User {
   id: string;
-  name?: string;
+  fullName?: string;
   email?: string;
 }
 
@@ -130,8 +130,7 @@ const CreateCertificate = ({
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, initialUsers]);
-
+  }, [searchTerm]);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -247,10 +246,8 @@ const CreateCertificate = ({
                               )}
                             >
                               {field.value
-                                ? users.find((user) => user.id === field.value)
-                                    ?.name ||
-                                  users.find((user) => user.id === field.value)
-                                    ?.email ||
+                                ? users.find((user) => user.id === field.value)?.fullName ||
+                                  users.find((user) => user.id === field.value)?.email ||
                                   "Select student"
                                 : "Select student"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -292,12 +289,8 @@ const CreateCertificate = ({
                                           )}
                                         />
                                         <div className="flex flex-col">
-                                          <span>
-                                            {user.name || "Unknown Name"}
-                                          </span>
-                                          <span className="text-xs text-muted-foreground">
-                                            {user.email}
-                                          </span>
+                                          <span>{user.fullName || "Unknown Name"}</span>
+                                          <span className="text-xs text-muted-foreground">{user.email}</span>
                                         </div>
                                       </CommandItem>
                                     ))}

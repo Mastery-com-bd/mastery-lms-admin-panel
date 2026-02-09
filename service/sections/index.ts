@@ -1,8 +1,12 @@
+"use server"
+
+
 import { config } from "@/config";
 import { buildParams } from "@/utills/paramsBuilder";
 import { cache } from "react";
 import { TQuery } from "../category";
 import { getValidToken } from "../auth/validToken";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 
 
@@ -37,6 +41,8 @@ export const deleteSection = async ({ sectionId }: { sectionId: string }) => {
                 },
             }
         );
+        revalidateTag("Section", "default");
+        revalidatePath("/dashboard/sections");
         const result = await res.json();
         return result;
     } catch (error: any) {
@@ -66,6 +72,8 @@ export const createSection = async ({ payload }: {
                 body: JSON.stringify(payload),
             }
         );
+        revalidateTag("Section", "default");
+        revalidatePath("/dashboard/sections");
         const result = await res.json();
         return result;
     } catch (error: any) {
@@ -95,6 +103,8 @@ export const updateSection = async ({ payload, sectionId }: {
                 body: JSON.stringify(payload),
             }
         );
+        revalidateTag("Section", "default");
+        revalidatePath("/dashboard/sections");
         const result = await res.json();
         return result;
     } catch (error: any) {

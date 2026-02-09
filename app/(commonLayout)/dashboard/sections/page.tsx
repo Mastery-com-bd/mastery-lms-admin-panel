@@ -10,7 +10,11 @@ const Page = async ({
   }>;
 }) => {
   const query = await searchParams;
-  const result = await getAllSections(query);
+  const result = await getAllSections({
+    ...query,
+    sortBy: (query.sortBy as string) || "createdAt",
+    sortOrder: (query.sortOrder as string) || "asc",
+  });
 
   return (
     <div>
