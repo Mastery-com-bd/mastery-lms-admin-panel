@@ -43,7 +43,6 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   startTime: z.string().min(1, "Please select a date and time"),
   endTime: z.string().optional(),
-  duration: z.string().min(1, "Duration is required"),
   meetingUrl: z.string().optional(),
   meetingId: z.string().optional(),
   meetingPassword: z.string().optional(),
@@ -68,7 +67,6 @@ export default function CreateLiveClass() {
       description: "",
       startTime: "",
       endTime: "",
-      duration: "",
       meetingUrl: "",
       meetingId: "",
       meetingPassword: "",
@@ -123,7 +121,6 @@ export default function CreateLiveClass() {
         description: values.description,
         startTime: values.startTime,
         endTime: values.endTime || "",
-        duration: Number(values.duration),
         meetingUrl: values.meetingUrl,
         meetingId: values.meetingId,
         meetingPassword: values.meetingPassword,
@@ -270,25 +267,6 @@ export default function CreateLiveClass() {
                             {...field}
                           />
                         </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration (minutes)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder="60"
-                          {...field}
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

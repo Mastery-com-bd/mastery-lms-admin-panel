@@ -1,13 +1,15 @@
 import UpdateLiveClass from "@/components/dashboard/live-class/update/update-live-class";
-import React from "react";
+import { getLiveClassById } from "@/service/live-class";
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const paramsData = await params;
   const liveClassId = paramsData.id;
+  const response = await getLiveClassById(liveClassId);
+  const liveClass = response.data || response;
 
   return (
     <div>
-      <UpdateLiveClass liveClassId={liveClassId} />
+      <UpdateLiveClass liveClassId={liveClassId} initialData={liveClass} />
     </div>
   );
 };
