@@ -8,6 +8,7 @@ const BooksCategoriesPage = async ({
   searchParams: TSearchParams;
 }) => {
   const query = await searchParams;
+
   const result = await getAllBookCategories(query);
   const categories = result?.data || [];
   const meta = result?.meta;

@@ -11,8 +11,12 @@ import { TCreateCategory } from "@/components/dashboard/category/all/CreateCateg
 export const getAllBookCategories = async (query?: TQuery) => {
   // const token = await getValidToken();
   try {
+    const params = new URLSearchParams();
+    if (query?.searchTerm) {
+      params.append("searchTerm", query?.searchTerm.toString());
+    }
     const res = await fetch(
-      `${config.next_public_base_url}/product-category?${buildParams(query)}`,
+      `${config.next_public_base_url}/product-category?${params}`,
       {
         method: "GET",
         // headers: {
