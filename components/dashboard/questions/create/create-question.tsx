@@ -46,6 +46,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { createQuestion } from "@/service/questions";
+import { PopoverClose } from "@radix-ui/react-popover";
 
 interface Quiz {
   id: string;
@@ -304,7 +305,7 @@ export default function CreateQuestion() {
                         control={form.control}
                         name="quizId"
                         render={({ field }) => (
-                          <FormItem className="flex max-w-[300px] flex-col">
+                          <FormItem className="flex max-w-75 flex-col">
                             <FormLabel>
                               Quiz <span className="text-destructive">*</span>
                             </FormLabel>
@@ -329,7 +330,7 @@ export default function CreateQuestion() {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-[300px] p-0">
+                              <PopoverContent className="w-75 p-0">
                                 <Command>
                                   <CommandInput
                                     placeholder="Search quiz..."
@@ -340,21 +341,23 @@ export default function CreateQuestion() {
                                   <CommandGroup>
                                     {quizzes.map((quiz) => (
                                       <CommandItem
-                                        value={quiz.title}
                                         key={quiz.id}
+                                        value={quiz.title}
                                         onSelect={() => {
                                           form.setValue("quizId", quiz.id);
                                         }}
                                       >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            quiz.id === field.value
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        {quiz.title}
+                                        <PopoverClose className="w-full flex items-center">
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              quiz.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0",
+                                            )}
+                                          />
+                                          {quiz.title}
+                                        </PopoverClose>
                                       </CommandItem>
                                     ))}
                                   </CommandGroup>
