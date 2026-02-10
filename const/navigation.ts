@@ -30,11 +30,6 @@ export const navigation: TNavigation[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Analytics",
-    url: "/dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
     title: "Categories",
     url: "/dashboard/categories",
     icon: Layers,
