@@ -4,6 +4,7 @@
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 import { config } from "@/config";
+import { TForgetPasswordForms } from "@/app/(auth)/forgot-password/page";
 
 type TLogin = {
   email: string;
@@ -40,6 +41,44 @@ export const login = async (data: TLogin) => {
         sameSite: "lax",
       });
     }
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const forgetPassword = async (data: TForgetPasswordForms) => {
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/auth/forgot-password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
+export const verifyOtp = async (data: string) => {
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/auth/verify-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+    const result = await res.json();
     return result;
   } catch (error: any) {
     return Error(error);
