@@ -58,7 +58,7 @@ export const RevenueChart = memo(({ data }: RevenueChartProps) => {
       </div>
 
       {/* Fixed Chart Area */}
-      {/* <div className="relative mb-4 h-64 rounded-lg p-4">
+      <div className="relative mb-4 h-64 rounded-lg p-4">
         <div className="flex h-full items-end justify-between gap-3">
           {chartData?.map((item, index) => (
             <div
@@ -91,10 +91,10 @@ export const RevenueChart = memo(({ data }: RevenueChartProps) => {
             </div>
           ))}
         </div>
-      </div> */}
+      </div>
 
       {/* Summary Stats */}
-      {/* <div className="border-border/50 grid grid-cols-3 gap-4 border-t pt-4">
+      <div className="border-border/50 grid grid-cols-3 gap-4 border-t pt-4">
         <div className="text-center">
           <div className="text-2xl font-bold text-green-500">
             ${totalRevenue.toLocaleString()}
@@ -116,7 +116,7 @@ export const RevenueChart = memo(({ data }: RevenueChartProps) => {
           </div>
           <div className="text-muted-foreground text-xs">Average</div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 });
