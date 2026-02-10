@@ -68,6 +68,7 @@ export const createCertificate = async (data: FormData) => {
       body: data,
     });
     const result = await res.json();
+    console.log(result);
     revalidateTag("Certificate", "default");
     revalidatePath("/dashboard/certificates");
     return result;

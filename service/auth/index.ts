@@ -104,3 +104,9 @@ export const logout = async (): Promise<{
     return { success: false, message: "logged out failed Logged out" };
   }
 };
+
+export const getAccessToken = async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")!.value;
+  return token;
+};

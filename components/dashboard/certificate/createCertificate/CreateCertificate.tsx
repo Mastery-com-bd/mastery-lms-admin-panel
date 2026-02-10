@@ -246,8 +246,10 @@ const CreateCertificate = ({
                               )}
                             >
                               {field.value
-                                ? users.find((user) => user.id === field.value)?.fullName ||
-                                  users.find((user) => user.id === field.value)?.email ||
+                                ? users.find((user) => user.id === field.value)
+                                    ?.fullName ||
+                                  users.find((user) => user.id === field.value)
+                                    ?.email ||
                                   "Select student"
                                 : "Select student"}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -289,8 +291,12 @@ const CreateCertificate = ({
                                           )}
                                         />
                                         <div className="flex flex-col">
-                                          <span>{user.fullName || "Unknown Name"}</span>
-                                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                                          <span>
+                                            {user.fullName || "Unknown Name"}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {user.email}
+                                          </span>
                                         </div>
                                       </CommandItem>
                                     ))}
