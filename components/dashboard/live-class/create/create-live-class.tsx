@@ -43,7 +43,6 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   startTime: z.string().min(1, "Please select a date and time"),
   endTime: z.string().optional(),
-  duration: z.string().min(1, "Duration is required"),
   meetingUrl: z.string().optional(),
   meetingId: z.string().optional(),
   meetingPassword: z.string().optional(),
@@ -55,6 +54,7 @@ interface Course {
 }
 
 export default function CreateLiveClass() {
+  const [courseLoading, setCourseLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const router = useRouter();
@@ -67,15 +67,34 @@ export default function CreateLiveClass() {
       description: "",
       startTime: "",
       endTime: "",
-      duration: "",
       meetingUrl: "",
       meetingId: "",
       meetingPassword: "",
     },
   });
 
+  const selectedStartTime = form.watch("startTime");
+
+  useEffect(() => {
+    if (selectedStartTime) {
+      const startDate = new Date(selectedStartTime);
+      startDate.setHours(startDate.getHours() + 1);
+
+      // Format to datetime-local string (YYYY-MM-DDTHH:mm)
+      const year = startDate.getFullYear();
+      const month = String(startDate.getMonth() + 1).padStart(2, "0");
+      const day = String(startDate.getDate()).padStart(2, "0");
+      const hours = String(startDate.getHours()).padStart(2, "0");
+      const minutes = String(startDate.getMinutes()).padStart(2, "0");
+
+      const formattedEndTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+      form.setValue("endTime", formattedEndTime);
+    }
+  }, [selectedStartTime, form]);
+
   useEffect(() => {
     const fetchCourses = async () => {
+      setCourseLoading(true);
       try {
         const res = await getAllCoursesWithoutLimit();
         if (res.success) {
@@ -84,6 +103,8 @@ export default function CreateLiveClass() {
       } catch (error) {
         console.error("Failed to fetch courses:", error);
         toast.error("Failed to load courses");
+      } finally {
+        setCourseLoading(false);
       }
     };
     fetchCourses();
@@ -99,39 +120,26 @@ export default function CreateLiveClass() {
         title: values.title,
         description: values.description,
         startTime: values.startTime,
-        endTime: values.endTime,
-        duration: Number(values.duration),
+        endTime: values.endTime || "",
         meetingUrl: values.meetingUrl,
         meetingId: values.meetingId,
         meetingPassword: values.meetingPassword,
       };
 
-      console.log("Live class creation request body:", body);
-
       const res = await createLiveClass(body);
 
+      router.push("/dashboard/live-class");
       if (res.success) {
+        toast.dismiss();
         showSuccess({
           message: res.message || "Live class created successfully",
         });
-      } else{
+      } else {
+        toast.dismiss();
         showError({
           message: res.message || "Failed to create live class",
         });
       }
-
-      form.reset({
-        courseId: "",
-        title: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        duration: "",
-        meetingUrl: "",
-        meetingId: "",
-        meetingPassword: "",
-      });
-      router.refresh();
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -155,10 +163,7 @@ export default function CreateLiveClass() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -172,7 +177,13 @@ export default function CreateLiveClass() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a course" />
+                            <SelectValue
+                              placeholder={
+                                courseLoading
+                                  ? "Loading courses..."
+                                  : "Select a course"
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -195,10 +206,7 @@ export default function CreateLiveClass() {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g. Live Q&A Session"
-                          {...field}
-                        />
+                        <Input placeholder="e.g. Live Q&A Session" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -259,25 +267,6 @@ export default function CreateLiveClass() {
                             {...field}
                           />
                         </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration (minutes)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder="60"
-                          {...field}
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -358,4 +347,3 @@ export default function CreateLiveClass() {
     </div>
   );
 }
-

@@ -49,7 +49,6 @@ export const getASingleCourseRequirment = async (id: string) => {
 };
 
 export const createCourseRequirment = async (data: TCreateCourseLearning) => {
-  console.log(data);
   const token = await getValidToken();
   try {
     const res = await fetch(
@@ -76,7 +75,6 @@ export const updateCourseRequirment = async (
   data: TCreateCourseLearning,
   id: string,
 ) => {
-  console.log(data);
   const token = await getValidToken();
   try {
     const res = await fetch(

@@ -7,8 +7,6 @@ const Page = async ({params}: {params: Promise<{id: string}>}) => {
 
   const courseDetails = await getCourseDetailsById(id);
 
-  console.log("Sections :", courseDetails.data)
-
 
   return (
     <div>

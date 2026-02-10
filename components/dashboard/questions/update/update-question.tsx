@@ -92,7 +92,6 @@ const UpdateQuestion = ({ questionId }: UpdateQuestionProps) => {
       setIsLoading(true);
       try {
         const response = await getQuestionDetailsById(questionId);
-        console.log("Question Data :", response);
 
         if (!response.success) {
           throw new Error("Failed to fetch question details");

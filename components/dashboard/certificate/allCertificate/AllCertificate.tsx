@@ -17,7 +17,6 @@ const AllCertificate = ({
   certificates: TCertificate[];
   meta: TMeta;
 }) => {
-  console.log(certificates);
 
   const column = certificateTableColumn();
   return (

@@ -177,8 +177,6 @@ export function QuizEditor() {
       const res = await createQuiz(body);
       toast.dismiss();
 
-      console.log("Quiz Create Response :", res)
-
       if (res.success) {
         showSuccess({ message: res.message || "Quiz created successfully" });
         router.push("/dashboard/quiz");

@@ -53,7 +53,7 @@ export const getASingleCourseLearning = async (id: string) => {
 };
 
 export const createCourseLearning = async (data: TCreateCourseLearning) => {
-  console.log(data);
+
   const token = await getValidToken();
   try {
     const res = await fetch(`${config.next_public_base_url}/course-learning`, {
@@ -77,7 +77,6 @@ export const updateourseLearning = async (
   data: TCreateCourseLearning,
   id: string,
 ) => {
-  console.log(data);
   const token = await getValidToken();
   try {
     const res = await fetch(

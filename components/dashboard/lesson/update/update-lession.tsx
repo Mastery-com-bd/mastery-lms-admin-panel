@@ -90,8 +90,6 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
 
   const selectedCourseId = form.watch("courseId");
 
-  console.log("Fetched Data:", courses, sections);
-
   // Fetch initial data
   useEffect(() => {
 

@@ -8,8 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,14 +22,13 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  CloudDownload,
   MoreHorizontal,
-  Plus,
   RefreshCcw,
-  Search,
+  Search
 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -334,12 +332,16 @@ const AllStudent = ({ users, meta }: { users: User[]; meta: Meta }) => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit student</DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link href={`/dashboard/students/details/${student.id}`}>
+                              View details
+                            </Link>
+                          </DropdownMenuItem>
+                          {/* <DropdownMenuItem>Edit student</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red-600">
                             Delete student
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

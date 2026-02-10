@@ -128,3 +128,26 @@ export const getAllCoursesWithoutLimit = cache(async () => {
     return Error(error);
   }
 });
+
+export const getStudentAllEnrollrdCourses = async () => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/enrollment/my-enrollments`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+        next: {
+          tags: ["MyCourses"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};

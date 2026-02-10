@@ -8,8 +8,7 @@ const Page = async ({ params }: { params: { id: string } }) => {
 
   return (
     <div>
-      {/* <SupportDetails initialData={supportRequest} /> */}
-      Support Details
+      <SupportDetails initialData={supportRequest} />
     </div>
   );
 };
