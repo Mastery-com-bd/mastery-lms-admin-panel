@@ -5,16 +5,34 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Calendar } from 'lucide-react';
 
-const chartData = [
-  { month: 'Jan', value: 4000, growth: 12, color: 'bg-blue-500' },
-  { month: 'Feb', value: 3000, growth: -8, color: 'bg-red-500' },
-  { month: 'Mar', value: 5000, growth: 25, color: 'bg-green-500' },
-  { month: 'Apr', value: 4500, growth: 15, color: 'bg-yellow-500' },
-  { month: 'May', value: 6000, growth: 33, color: 'bg-purple-500' },
-  { month: 'Jun', value: 5500, growth: 22, color: 'bg-cyan-500' },
-];
+interface RevenueChartProps {
+  data: { month: string; revenue: number }[];
+}
 
-export const RevenueChart = memo(() => {
+export const RevenueChart = memo(({ data }: RevenueChartProps) => {
+  const chartData = data.map((item, index) => {
+    const prevRevenue = index > 0 ? data[index - 1].revenue : 0;
+    const growth = prevRevenue > 0 ? ((item.revenue - prevRevenue) / prevRevenue) * 100 : 0;
+    
+    // Cycle through colors
+    const colors = [
+      'bg-blue-500', 'bg-red-500', 'bg-green-500', 
+      'bg-yellow-500', 'bg-purple-500', 'bg-cyan-500'
+    ];
+    
+    return {
+      month: item.month,
+      value: item.revenue,
+      growth: Math.round(growth),
+      color: colors[index % colors.length]
+    };
+  });
+
+  const totalRevenue = data.reduce((acc, curr) => acc + curr.revenue, 0);
+  // Calculate average growth or just show something meaningful
+  const averageRevenue = totalRevenue / (data.length || 1);
+  const growthRate = chartData.length > 0 ? chartData[chartData.length - 1].growth : 0;
+
   return (
     <div className="border-border bg-card/40 rounded-xl border p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -29,7 +47,7 @@ export const RevenueChart = memo(() => {
         </div>
         <Button variant="outline" size="sm">
           <Calendar className="mr-2 h-4 w-4" />
-          Last 6 months
+          Last {data.length} months
         </Button>
       </div>
 
@@ -43,9 +61,10 @@ export const RevenueChart = memo(() => {
             >
               <motion.div
                 initial={{ height: 0 }}
-                animate={{ height: `${(item.value / 6000) * 180}px` }}
+                // Scale height based on max value, default to 180px if max is 0
+                animate={{ height: `${item.value > 0 ? (item.value / (Math.max(...chartData.map(d => d.value)) || 1)) * 180 : 4}px` }}
                 transition={{ duration: 1, delay: index * 0.1 }}
-                className={`w-full ${item.color} relative min-h-5 cursor-pointer rounded-t-lg transition-opacity hover:opacity-80`}
+                className={`w-full ${item.color} relative min-h-1 cursor-pointer rounded-t-lg transition-opacity hover:opacity-80`}
               >
                 {/* Tooltip */}
                 <div className="border-border bg-popover absolute -top-16 left-1/2 z-10 -translate-x-1/2 transform rounded-lg border px-3 py-2 text-sm whitespace-nowrap opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
@@ -53,7 +72,7 @@ export const RevenueChart = memo(() => {
                     ${item.value.toLocaleString()}
                   </div>
                   <div
-                    className={`text-xs ${item.growth > 0 ? 'text-green-500' : 'text-red-500'}`}
+                    className={`text-xs ${item.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}
                   >
                     {item.growth > 0 ? '+' : ''}
                     {item.growth}%
@@ -71,15 +90,17 @@ export const RevenueChart = memo(() => {
       {/* Summary Stats */}
       <div className="border-border/50 grid grid-cols-3 gap-4 border-t pt-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-green-500">$27K</div>
+          <div className="text-2xl font-bold text-green-500">${totalRevenue.toLocaleString()}</div>
           <div className="text-muted-foreground text-xs">Total Revenue</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-500">+18%</div>
+          <div className={`text-2xl font-bold ${growthRate >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+            {growthRate > 0 ? '+' : ''}{growthRate}%
+          </div>
           <div className="text-muted-foreground text-xs">Growth Rate</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-purple-500">$4.5K</div>
+          <div className="text-2xl font-bold text-purple-500">${Math.round(averageRevenue).toLocaleString()}</div>
           <div className="text-muted-foreground text-xs">Average</div>
         </div>
       </div>

@@ -164,7 +164,7 @@ export const navigation: TNavigation[] = [
       },
     ],
   },
-  {
+  /* {
     title: "Supports",
     icon: Headset,
     items: [
@@ -173,7 +173,7 @@ export const navigation: TNavigation[] = [
         url: "/dashboard/supports",
       },
     ],
-  },
+  }, */
   {
     title: "Supports",
     url: "/dashboard/supports",

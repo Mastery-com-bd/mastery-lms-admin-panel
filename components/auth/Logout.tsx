@@ -4,14 +4,10 @@ import { Button } from "../ui/button";
 
 const Logout = () => {
   const handleLogOut = async () => {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/logout`,
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
-    console.log(await response.json());
+    await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
   };
   return (
     <div>

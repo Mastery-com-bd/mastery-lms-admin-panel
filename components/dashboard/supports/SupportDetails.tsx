@@ -243,33 +243,7 @@ export default function SupportDetails({ initialData }: { initialData: SupportRe
             </CardContent>
           </Card>
 
-          {/* Course Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Course Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium mb-1">Course Title</p>
-                  <p className="text-sm text-muted-foreground">{request.course?.title}</p>
-                </div>
-                {request.course?.instructor && (
-                    <div>
-                    <p className="text-sm font-medium mb-1">Instructor</p>
-                    <p className="text-sm text-muted-foreground">{request.course.instructor.name}</p>
-                    </div>
-                )}
-                <div className="pt-2">
-                    <Button variant="outline" className="w-full" size="sm" asChild>
-                        <a href={`/dashboard/courses/all-courses/${request.courseId}`} target="_blank" rel="noopener noreferrer">
-                            View Course
-                        </a>
-                    </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          
         </div>
       </div>
     </div>

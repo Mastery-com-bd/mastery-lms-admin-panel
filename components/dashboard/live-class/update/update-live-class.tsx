@@ -117,8 +117,6 @@ export default function UpdateLiveClass({
 
       const res = await updateLiveClass(liveClassId, body);
 
-      console.log("Update Live Class Response", res);
-
       if (res.success) {
         toast.dismiss();
         showSuccess({

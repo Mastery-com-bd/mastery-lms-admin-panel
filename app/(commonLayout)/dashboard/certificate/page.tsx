@@ -9,7 +9,6 @@ const AllCertificatePage = async ({
 }) => {
   const query = await searchParams;
   const result = await getAllCertificates(query);
-  console.log(result);
 
   const certificates = result?.data || [];
   const meta = result?.meta || {};

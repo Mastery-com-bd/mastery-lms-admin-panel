@@ -1,63 +1,141 @@
-"use client";
+"use client"
 
 import { SidebarInset } from "@/components/ui/sidebar";
-import { DollarSign, Eye, Users } from "lucide-react";
+import { 
+  DollarSign, 
+  Users, 
+  BookOpen, 
+  GraduationCap, 
+  UserCheck, 
+  PlayCircle
+} from "lucide-react";
 import { DashboardCard } from "./components/dashboard-card";
-import { QuickActions } from "./components/quick-actions";
-import { RecentActivity } from "./components/recent-activity";
 import { RevenueChart } from "./components/revenue-chart";
-import { SystemStatus } from "./components/system-status";
-import { UsersTable } from "./components/user-table";
+import { UserGrowthChart } from "./components/user-growth-chart";
 
-// Dashboard stats data
-const stats = [
-  {
-    title: "Total Students",
-    value: "12,345",
-    change: "+12%",
-    changeType: "positive" as const,
-    icon: Users,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-  },
-  {
-    title: 'Today Revenue',
-    value: '$45,678',
-    change: '+8.2%',
-    changeType: 'positive' as const,
-    icon: DollarSign,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-  },
-  {
-    title: "Free Courses",
-    value: "256",
-    change: "+15%",
-    changeType: "positive" as const,
-    icon: Eye,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-  },
-  {
-    title: "Total Courses",
-    value: "2,456",
-    change: "+15%",
-    changeType: "positive" as const,
-    icon: Eye,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-  },
-  
-];
+interface AnalyticsData {
+  month: string;
+  revenue: number;
+}
 
-export default function AdminDashboard() {
-  const handleExport = () => {
-    console.log("Exporting data...");
+interface UserGrowthData {
+  date: string;
+  users: number;
+}
+
+interface EnrollmentsData {
+  monthlyTotalEnrollments: number;
+  todayTotalEnrollments: number;
+  weeklyTotalEnrollments: number;
+}
+
+interface SummaryData {
+  totalActiveUsers: number;
+  totalCourseEnrolled: number;
+  totalCourseRevenue: number;
+  totalCourses: number;
+  totalEnrolledCourseCompleted: number;
+  totalFreeCourses: number;
+  totalInstructors: number;
+  totalProductRevenue: number;
+  totalStudents: number;
+}
+
+interface DashboardData {
+  charts: {
+    revenueAnalytics: AnalyticsData[];
+    userGrowth: UserGrowthData[];
   };
+  enrollments: EnrollmentsData;
+  summary: SummaryData;
+}
 
-  const handleAddUser = () => {
-    console.log("Adding new user...");
-  };
+interface AdminDashboardProps {
+  data: DashboardData;
+}
+
+export default function AdminDashboard({ data }: AdminDashboardProps) {
+  const { summary, charts, enrollments } = data;
+
+
+
+  const overviewStats = [
+    {
+      title: "Total Students",
+      value: summary.totalStudents.toLocaleString(),
+      change: "Total registered",
+      changeType: "positive" as const,
+      icon: Users,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+    },
+    {
+      title: "Total Revenue",
+      value: `$${(summary.totalCourseRevenue + summary.totalProductRevenue).toLocaleString()}`,
+      change: "Course + Product",
+      changeType: "positive" as const,
+      icon: DollarSign,
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+    },
+    {
+      title: "Active Users",
+      value: summary.totalActiveUsers.toLocaleString(),
+      change: "Currently active",
+      changeType: "positive" as const,
+      icon: UserCheck,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+    },
+    {
+      title: "Total Courses",
+      value: summary.totalCourses.toLocaleString(),
+      change: `${summary.totalFreeCourses} Free Courses`,
+      changeType: "positive" as const,
+      icon: BookOpen,
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
+    },
+  ];
+
+  const enrollmentStats = [
+    {
+      title: "Today's Enrollments",
+      value: enrollments.todayTotalEnrollments.toLocaleString(),
+      change: "Daily count",
+      changeType: "positive" as const,
+      icon: GraduationCap,
+      color: "text-indigo-500",
+      bgColor: "bg-indigo-500/10",
+    },
+    {
+      title: "Weekly Enrollments",
+      value: enrollments.weeklyTotalEnrollments.toLocaleString(),
+      change: "Last 7 days",
+      changeType: "positive" as const,
+      icon: GraduationCap,
+      color: "text-pink-500",
+      bgColor: "bg-pink-500/10",
+    },
+    {
+      title: "Monthly Enrollments",
+      value: enrollments.monthlyTotalEnrollments.toLocaleString(),
+      change: "This month",
+      changeType: "positive" as const,
+      icon: GraduationCap,
+      color: "text-cyan-500",
+      bgColor: "bg-cyan-500/10",
+    },
+    {
+      title: "Course Completions",
+      value: summary.totalEnrolledCourseCompleted.toLocaleString(),
+      change: "All time",
+      changeType: "positive" as const,
+      icon: PlayCircle,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+    }
+  ];
 
   return (
     <div>
@@ -74,30 +152,24 @@ export default function AdminDashboard() {
                 </p>
               </div>
 
-              {/* Stats Cards */}
+              {/* Overview Stats */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                {stats.map((stat, index) => (
+                {overviewStats.map((stat, index) => (
                   <DashboardCard key={stat.title} stat={stat} index={index} />
                 ))}
               </div>
 
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-3">
-                {/* Charts Section */}
-                <div className="space-y-4 sm:space-y-6 xl:col-span-2">
-                  <RevenueChart />
-                  <UsersTable onAddUser={handleAddUser} />
-                </div>
+              {/* Enrollment Stats */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                {enrollmentStats.map((stat, index) => (
+                  <DashboardCard key={stat.title} stat={stat} index={index + 4} />
+                ))}
+              </div>
 
-                {/* Sidebar Section */}
-                <div className="space-y-4 sm:space-y-6">
-                  <QuickActions
-                    onAddUser={handleAddUser}
-                    onExport={handleExport}
-                  />
-                  <SystemStatus />
-                  <RecentActivity />
-                </div>
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
+                <RevenueChart data={charts.revenueAnalytics} />
+                <UserGrowthChart data={charts.userGrowth} />
               </div>
             </div>
           </div>

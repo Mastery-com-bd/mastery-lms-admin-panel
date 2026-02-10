@@ -161,8 +161,6 @@ export default function CreateQuestion() {
         correctAnswer: correctAnswer ?? 0,
       };
 
-      console.log("Submission body:", body);
-
       const res = await createQuestion(body);
       toast.dismiss();
       if (res.success) {
