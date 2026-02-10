@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
 import { SidebarInset } from "@/components/ui/sidebar";
-import { 
-  DollarSign, 
-  Users, 
-  BookOpen, 
-  GraduationCap, 
-  UserCheck, 
-  PlayCircle
+import {
+  DollarSign,
+  Users,
+  BookOpen,
+  GraduationCap,
+  UserCheck,
+  PlayCircle,
 } from "lucide-react";
 import { DashboardCard } from "./components/dashboard-card";
 import { RevenueChart } from "./components/revenue-chart";
@@ -55,14 +55,10 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ data }: AdminDashboardProps) {
-  const { summary, charts, enrollments } = data;
-
-
-
   const overviewStats = [
     {
       title: "Total Students",
-      value: summary.totalStudents.toLocaleString(),
+      value: data?.summary?.totalStudents.toLocaleString(),
       change: "Total registered",
       changeType: "positive" as const,
       icon: Users,
@@ -71,7 +67,7 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Total Revenue",
-      value: `$${(summary.totalCourseRevenue + summary.totalProductRevenue).toLocaleString()}`,
+      value: `$${(data?.summary?.totalCourseRevenue + data?.summary?.totalProductRevenue).toLocaleString()}`,
       change: "Course + Product",
       changeType: "positive" as const,
       icon: DollarSign,
@@ -80,7 +76,7 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Active Users",
-      value: summary.totalActiveUsers.toLocaleString(),
+      value: data?.summary?.totalActiveUsers.toLocaleString(),
       change: "Currently active",
       changeType: "positive" as const,
       icon: UserCheck,
@@ -89,8 +85,8 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Total Courses",
-      value: summary.totalCourses.toLocaleString(),
-      change: `${summary.totalFreeCourses} Free Courses`,
+      value: data?.summary?.totalCourses.toLocaleString(),
+      change: `${data?.summary?.totalFreeCourses} Free Courses`,
       changeType: "positive" as const,
       icon: BookOpen,
       color: "text-orange-500",
@@ -101,7 +97,7 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
   const enrollmentStats = [
     {
       title: "Today's Enrollments",
-      value: enrollments.todayTotalEnrollments.toLocaleString(),
+      value: data?.enrollments?.todayTotalEnrollments.toLocaleString(),
       change: "Daily count",
       changeType: "positive" as const,
       icon: GraduationCap,
@@ -110,7 +106,7 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Weekly Enrollments",
-      value: enrollments.weeklyTotalEnrollments.toLocaleString(),
+      value: data?.enrollments?.weeklyTotalEnrollments.toLocaleString(),
       change: "Last 7 days",
       changeType: "positive" as const,
       icon: GraduationCap,
@@ -119,7 +115,7 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Monthly Enrollments",
-      value: enrollments.monthlyTotalEnrollments.toLocaleString(),
+      value: data?.enrollments?.monthlyTotalEnrollments.toLocaleString(),
       change: "This month",
       changeType: "positive" as const,
       icon: GraduationCap,
@@ -128,13 +124,13 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
     },
     {
       title: "Course Completions",
-      value: summary.totalEnrolledCourseCompleted.toLocaleString(),
+      value: data?.summary?.totalEnrolledCourseCompleted.toLocaleString(),
       change: "All time",
       changeType: "positive" as const,
       icon: PlayCircle,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
-    }
+    },
   ];
 
   return (
@@ -154,22 +150,29 @@ export default function AdminDashboard({ data }: AdminDashboardProps) {
 
               {/* Overview Stats */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                {overviewStats.map((stat, index) => (
+                {overviewStats?.map((stat, index) => (
                   <DashboardCard key={stat.title} stat={stat} index={index} />
                 ))}
               </div>
 
               {/* Enrollment Stats */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                {enrollmentStats.map((stat, index) => (
-                  <DashboardCard key={stat.title} stat={stat} index={index + 4} />
+                {enrollmentStats?.map((stat, index) => (
+                  <DashboardCard
+                    key={stat.title}
+                    stat={stat}
+                    index={index + 4}
+                  />
                 ))}
               </div>
 
               {/* Charts Section */}
               <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
-                <RevenueChart data={charts.revenueAnalytics} />
-                <UserGrowthChart data={charts.userGrowth} />
+                {data?.charts?.revenueAnalytics && (
+                  <RevenueChart data={data?.charts?.revenueAnalytics} />
+                )}
+
+                <UserGrowthChart data={data?.charts?.userGrowth} />
               </div>
             </div>
           </div>

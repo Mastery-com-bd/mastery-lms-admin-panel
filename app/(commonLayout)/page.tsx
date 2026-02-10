@@ -2,11 +2,11 @@ import AdminDashboard from "@/components/dashboard/dashboard";
 import { getAdminReport } from "@/service/reports";
 
 const Page = async () => {
-  const report = await getAdminReport();
-
+  const result = await getAdminReport();
+  const report = result?.data || {};
   return (
     <div>
-      <AdminDashboard data={report.data} />
+      <AdminDashboard data={report} />
     </div>
   );
 };

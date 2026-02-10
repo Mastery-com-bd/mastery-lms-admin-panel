@@ -54,7 +54,7 @@ import {
 import { cn } from "@/lib/utils";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { config } from "@/config";
-import { getAllUsers, getEligebleStudents } from "@/service/user";
+import { getAllUsers } from "@/service/user";
 import Image from "next/image";
 
 // Define simplified interfaces for props
@@ -70,6 +70,7 @@ interface Course {
 }
 
 interface CreateCertificateProps {
+  users: User[];
   courses: Course[];
 }
 
@@ -79,16 +80,19 @@ const formSchema = z.object({
   certificatImage: z.any().optional(),
 });
 
-const CreateCertificate = ({ courses }: CreateCertificateProps) => {
+const CreateCertificate = ({
+  users: initialUsers,
+  courses,
+}: CreateCertificateProps) => {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   // States for student search
   const [open, setOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,38 +102,6 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
       certificatImage: undefined,
     },
   });
-
-  const selectedCourseId = form.watch("courseId");
-
-  useEffect(() => {
-    const fetchEligibleStudents = async () => {
-      if (!selectedCourseId) {
-        setUsers([]);
-        return;
-      }
-
-      setIsSearching(true);
-
-      try {
-        const res = await getEligebleStudents(selectedCourseId);
-
-        if (res?.success && res?.data) {
-          setUsers(res.data);
-        } else {
-          setUsers([]);
-        }
-
-        form.setValue("userId", "");
-      } catch (error) {
-        console.error("Failed to fetch eligible students", error);
-        setUsers([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    fetchEligibleStudents();
-  }, [form, selectedCourseId]);
 
   // Debounced search for users
   useEffect(() => {
@@ -153,7 +125,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
         }
       } else {
         // Reset to initial users if search is cleared
-        setUsers([]);
+        setUsers(initialUsers);
       }
     }, 500);
 
@@ -423,7 +395,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
 
               <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isSubmitting}>
-                  {form.formState.isSubmitting ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
