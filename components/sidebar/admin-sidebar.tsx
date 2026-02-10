@@ -69,7 +69,7 @@ export const AdminSidebar = memo(() => {
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Mastery LMS</span>
+                  <span className="truncate font-semibold">MINI ONLINE SKILLs</span>
                   <span className="truncate text-xs">Admin Panel</span>
                 </div>
               </Link>
