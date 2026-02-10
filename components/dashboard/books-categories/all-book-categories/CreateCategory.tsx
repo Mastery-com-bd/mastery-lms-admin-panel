@@ -109,8 +109,8 @@ const CreateCategory = ({ bookCategory }: { bookCategory?: TCategory }) => {
       {/* 🧾 Modal Content */}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
-          <DialogDescription>Add a new category for courses.</DialogDescription>
+          <DialogTitle>{bookCategory ? "Update" : "Create"} Category</DialogTitle>
+          <DialogDescription>{bookCategory ? "Update the category details." : "Add a new category for courses."}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -204,7 +204,7 @@ const CreateCategory = ({ bookCategory }: { bookCategory?: TCategory }) => {
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create
+                {bookCategory ? "Update Category" : "Create Category"}
               </Button>
             </div>
           </form>

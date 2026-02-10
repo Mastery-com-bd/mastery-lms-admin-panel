@@ -28,6 +28,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useParams, useRouter } from "next/navigation";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { updateQuiz } from "@/service/quiz";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -77,19 +79,18 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
   const params = useParams() as Record<string, string>;
   const effectiveQuizId = useMemo(
     () => quizId ?? params?.quizId ?? params?.id,
-    [quizId, params]
+    [quizId, params],
   );
 
   useEffect(() => {
+
+    // Fetch Course
     const fetchCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
+        const response = await getAllCoursesWithoutLimit();
+        if (response.success) {
+          setCourses(response.data || []);
         }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
@@ -108,7 +109,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${effectiveQuizId}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         if (!response.ok) {
           throw new Error("Failed to fetch quiz");
@@ -146,7 +147,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
       setLoadingLessons(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?courseId=${selectedCourseId}&limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?courseId=${selectedCourseId}&limit=100`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -177,22 +178,11 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
         timeLimit: values.timeLimit ?? null,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${effectiveQuizId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await updateQuiz(effectiveQuizId, body);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(errorData.message || "Failed to update quiz");
+      if (!res.success) {
+        console.log(res);
+        throw new Error(res.message || "Failed to update quiz");
       }
 
       toast.dismiss();
@@ -210,12 +200,13 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
     }
   }
 
-  return (
-    (loadingQuiz || loadingCourses || (selectedCourseId && loadingLessons)) ? (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    ) : (
+  return loadingQuiz ||
+    loadingCourses ||
+    (selectedCourseId && loadingLessons) ? (
+    <div className="flex justify-center items-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  ) : (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -325,7 +316,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
                             <Input
                               value={
                                 courses.find(
-                                  (course) => course.id === selectedCourseId
+                                  (course) => course.id === selectedCourseId,
                                 )?.title || ""
                               }
                               disabled
@@ -351,7 +342,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
                             <Input
                               value={
                                 lessons.find(
-                                  (lesson) => lesson.id === selectedLessonId
+                                  (lesson) => lesson.id === selectedLessonId,
                                 )?.title || ""
                               }
                               disabled
@@ -411,7 +402,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             )
                           }
                           min={1}
@@ -439,7 +430,7 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
                           value={field.value}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : 0
+                              e.target.value ? Number(e.target.value) : 0,
                             )
                           }
                         />
@@ -454,6 +445,5 @@ export default function UpdateQuiz({ quizId }: { quizId?: string }) {
         </form>
       </Form>
     </motion.div>
-    )
   );
 }

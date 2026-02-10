@@ -147,17 +147,17 @@ export const AdminSidebar = memo(() => {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
+          {/* <SidebarMenuItem>
             <ToggleButton />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
+          </SidebarMenuItem> */}
+          {/* <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Admin Profile">
               <Link prefetch={false} href="/dashboard/profile">
                 <User />
                 <span>Admin Profile</span>
               </Link>
             </SidebarMenuButton>
-          </SidebarMenuItem>
+          </SidebarMenuItem> */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Admin Profile">
               <Button

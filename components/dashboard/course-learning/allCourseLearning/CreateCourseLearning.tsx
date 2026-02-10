@@ -7,7 +7,6 @@ import {
 } from "@/service/courseLearning";
 import { TCourse } from "@/types/course.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 import {
@@ -18,14 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -39,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { TCourseLearningData } from "@/types/courseLearning.types";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const formSchema = z.object({
   courseId: z.string({
@@ -70,7 +63,7 @@ const CreateCourseLearning = ({
   course: TCourse[];
   courseLearning?: TCourseLearningData;
 }) => {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -82,9 +75,10 @@ const CreateCourseLearning = ({
   });
 
   const onSubmit = async (data: TCourseLearning) => {
-    const toastId = toast.loading("course learning creating", {
-      duration: 3000,
-    });
+    const toastId = toast.loading(
+      courseLearning ? "Updating course learning..." : "Creating course learning...",
+      { duration: 3000 }
+    );
     const payload = {
       ...data,
       order: Number(data.order),
@@ -99,48 +93,28 @@ const CreateCourseLearning = ({
 
       if (result?.success) {
         toast.success(result?.message, { id: toastId, duration: 3000 });
-        form.reset();
-        setOpen(false);
+        // Redirect to list page
+        router.push("/dashboard/course-learning");
+        router.refresh();
       } else {
         toast.error(result?.message, { id: toastId, duration: 3000 });
       }
     } catch (error: any) {
       console.log(error);
+      toast.error("Something went wrong", { id: toastId });
     }
   };
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          form.reset();
-        }
-        setOpen(isOpen);
-      }}
-    >
-      <DialogTrigger asChild>
-        {courseLearning ? (
-          <Button
-            variant="secondary"
-            className="cursor-pointer bg-transparent p-2 "
-          >
-            Update
-          </Button>
-        ) : (
-          <Button className="cursor-pointer">Create Course Learning</Button>
-        )}
-      </DialogTrigger>
 
-      {/* 🧾 Modal Content */}
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Course Learning</DialogTitle>
-          <DialogDescription>Add a course learning outline.</DialogDescription>
-        </DialogHeader>
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>{courseLearning ? "Update Course Learning" : "Create Course Learning"}</CardTitle>
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <FormLabel>Select Category</FormLabel>
+              <FormLabel>Select Course</FormLabel>
               <Controller
                 name="courseId"
                 control={form.control}
@@ -231,7 +205,14 @@ const CreateCourseLearning = ({
               )}
             />
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 disabled={form.formState.isSubmitting}
@@ -240,13 +221,13 @@ const CreateCourseLearning = ({
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create
+                {courseLearning ? "Update" : "Create"}
               </Button>
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 };
 

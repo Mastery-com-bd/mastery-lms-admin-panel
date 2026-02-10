@@ -52,15 +52,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { showError } from "@/lib/toast";
+import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { config } from "@/config";
 import { getAllUsers, getEligebleStudents } from "@/service/user";
 import Image from "next/image";
-import { createCertificate } from "@/service/certificate";
 
 // Define simplified interfaces for props
 interface User {
   id: string;
-  name?: string;
+  fullName?: string;
   email?: string;
 }
 
@@ -88,6 +88,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -158,7 +159,6 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -184,31 +184,46 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const toastId = toast.loading("creating certificate");
+    setIsSubmitting(true);
+    showLoading("Creating certificate...");
 
     try {
       const formData = new FormData();
-
-      // REQUIRED fields
       formData.append("userId", values.userId);
       formData.append("courseId", values.courseId);
 
-      // FILE (must be File, not string)
       if (values.certificatImage instanceof File) {
         formData.append("certificatImage", values.certificatImage);
       }
 
-      const result = await createCertificate(formData);
+      const response = await fetch(
+        `${config.next_public_base_url}/certificate`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        },
+      );
 
-      if (result?.success) {
-        toast.success(result.message, { id: toastId });
-        router.push("/dashboard/certificate");
-      } else {
-        toast.error(result?.message, { id: toastId });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create certificate");
       }
+
+      toast.dismiss();
+      showSuccess({ message: "Certificate created successfully" });
+      router.push("/dashboard/certificate");
+      router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong", { id: toastId });
+      toast.dismiss();
+      showError({
+        message:
+          error instanceof Error ? error.message : "Something went wrong",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -260,7 +275,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
                             >
                               {field.value
                                 ? users.find((user) => user.id === field.value)
-                                    ?.name ||
+                                    ?.fullName ||
                                   users.find((user) => user.id === field.value)
                                     ?.email ||
                                   "Select student"
@@ -305,7 +320,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
                                         />
                                         <div className="flex flex-col">
                                           <span>
-                                            {user.name || "Unknown Name"}
+                                            {user.fullName || "Unknown Name"}
                                           </span>
                                           <span className="text-xs text-muted-foreground">
                                             {user.email}
@@ -407,7 +422,7 @@ const CreateCertificate = ({ courses }: CreateCertificateProps) => {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+                <Button type="submit" disabled={isSubmitting}>
                   {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

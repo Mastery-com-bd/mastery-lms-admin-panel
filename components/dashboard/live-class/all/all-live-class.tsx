@@ -33,7 +33,7 @@ interface LiveClass {
   courseId: string;
   title: string;
   description: string;
-  scheduledAt: string;
+  startTime: string;
   duration: number;
   meetingLink: string;
   meetingId: string;
@@ -61,8 +61,10 @@ const AllLiveClass = ({
   const searchParams = useSearchParams();
 
   const [courses, setCourses] = useState<CourseSummary[]>([]);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchTerm") || "");
-  
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("searchTerm") || "",
+  );
+
   // Derived state from URL params
   const courseFilter = searchParams.get("courseId") || "all";
   const statusFilter = searchParams.get("status") || "all";
@@ -77,9 +79,11 @@ const AllLiveClass = ({
       } else {
         params.delete("searchTerm");
       }
-      
+
       // Only push if changed
-      if (params.get("searchTerm") !== (searchParams.get("searchTerm") || null)) {
+      if (
+        params.get("searchTerm") !== (searchParams.get("searchTerm") || null)
+      ) {
         params.set("page", "1"); // Reset to page 1 on search
         router.push(`${pathname}?${params.toString()}`);
       }
@@ -92,7 +96,7 @@ const AllLiveClass = ({
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -148,7 +152,7 @@ const AllLiveClass = ({
       return liveClass.status;
     }
     const now = new Date();
-    const scheduled = new Date(liveClass.scheduledAt);
+    const scheduled = new Date(liveClass.startTime);
     const end = new Date(scheduled.getTime() + liveClass.duration * 60000);
 
     if (now < scheduled) return "UPCOMING";
@@ -173,7 +177,7 @@ const AllLiveClass = ({
       <Card className="border-none shadow-sm">
         <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between border-b">
           <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
-            <div className="relative flex-1 min-w-[220px]">
+            <div className="relative flex-1 min-w-55">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search by title or description"
@@ -235,9 +239,7 @@ const AllLiveClass = ({
                 >
                   Schedule
                 </th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                  Duration
-                </th>
+               
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                   Status
                 </th>
@@ -267,7 +269,7 @@ const AllLiveClass = ({
                         <span className="font-medium">
                           {liveClass.course?.title ||
                             courses.find(
-                              (course) => course.id === liveClass.courseId
+                              (course) => course.id === liveClass.courseId,
                             )?.title ||
                             "Untitled course"}
                         </span>
@@ -290,20 +292,13 @@ const AllLiveClass = ({
                       <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1">
                           <CalendarClock className="w-3 h-3" />
-                          {formatDateTime(liveClass.scheduledAt)}
+                          {formatDateTime(liveClass.startTime)}
                         </span>
                       </div>
                     </td>
+                    
                     <td className="p-4 align-middle">
-                      <span className="flex items-center gap-1">
-                        <Clock3 className="w-3 h-3" />
-                        {liveClass.duration} min
-                      </span>
-                    </td>
-                    <td className="p-4 align-middle">
-                      <Badge>
-                        {getStatusBadge(liveClass)}
-                      </Badge>
+                      <Badge>{getStatusBadge(liveClass)}</Badge>
                     </td>
                     <td className="p-4 align-middle text-right">
                       <div className="flex items-center justify-end gap-2">

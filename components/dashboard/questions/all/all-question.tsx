@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Edit, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -34,6 +28,8 @@ import {
 import { showError, showLoading, showSuccess } from "@/lib/toast";
 import { toast } from "sonner";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { deleteQuestionById } from "@/service/questions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface QuizSummary {
   id: string;
@@ -72,7 +68,9 @@ const AllQuestion = ({
   const searchParams = useSearchParams();
 
   const [quizzes, setQuizzes] = useState<QuizSummary[]>([]);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchTerm") || "");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("searchTerm") || "",
+  );
 
   // Derived state
   const quizFilter = searchParams.get("quizId") || "all";
@@ -87,9 +85,11 @@ const AllQuestion = ({
         params.delete("searchTerm");
       }
       // Only push if changed to avoid loop/redundant pushes
-      if (params.get("searchTerm") !== (searchParams.get("searchTerm") || null)) {
-         params.set("page", "1");
-         router.push(`${pathname}?${params.toString()}`);
+      if (
+        params.get("searchTerm") !== (searchParams.get("searchTerm") || null)
+      ) {
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
       }
     }, 500);
     return () => clearTimeout(timeout);
@@ -103,7 +103,7 @@ const AllQuestion = ({
           `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz?limit=100`,
           {
             credentials: "include",
-          }
+          },
         );
         if (response.ok) {
           const data = await response.json();
@@ -136,21 +136,17 @@ const AllQuestion = ({
   const handleQuestionDelete = async (questionId: string) => {
     try {
       showLoading("Deleting question...");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz-question/${questionId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to delete question");
-      }
-      const data = await response.json();
-      if (data.success) {
+      const res = await deleteQuestionById({ questionId });
+
+      console.log("Question Delete Response :", res)
+
+      if (res.success) {
         toast.dismiss();
         showSuccess({ message: "Question deleted successfully" });
         router.refresh();
+      } else {
+        toast.dismiss();
+        showError({ message: "Failed to delete question" });
       }
     } catch (error) {
       console.log("Failed to delete question:", error);
@@ -187,7 +183,7 @@ const AllQuestion = ({
                 className="pl-9"
               />
             </div>
-             <Select
+            <Select
               value={quizFilter}
               onValueChange={(value) => handleFilterChange("quizId", value)}
             >
@@ -256,7 +252,7 @@ const AllQuestion = ({
                         </Badge>
                       </div>
                     </td>
-                    
+
                     <td className="p-4 align-middle">{q.points}</td>
                     <td className="p-4 align-middle">
                       <div className="flex flex-col">
@@ -269,42 +265,54 @@ const AllQuestion = ({
                       </div>
                     </td>
                     <td className="p-4 align-middle">
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" asChild>
-                          <Link
-                            href={`/dashboard/questions/update/${q.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you sure?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will
-                                permanently delete the question.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleQuestionDelete(q.id)}
-                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/dashboard/questions/update/${q.id}`}
+                              className="flex items-center gap-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span>Edit</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                                className="text-destructive focus:text-destructive"
                               >
-                                Confirm
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will
+                                  permanently delete the question.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleQuestionDelete(q.id)}
+                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                >
+                                  Confirm
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))

@@ -8,10 +8,10 @@ import CategoryDropdown from "../../category/all/CategoryDropdown";
 import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { deleteCourseLearning } from "@/service/courseLearning";
-import CreateCourseLearning from "./CreateCourseLearning";
 import { TCourse } from "@/types/course.types";
 import { TCourseLearningData } from "@/types/courseLearning.types";
 import TooltipComponent from "@/components/ui/TooltipComponent";
+import Link from "next/link";
 
 export const courseLearningTableColumn = (
   course: TCourse[],
@@ -56,6 +56,9 @@ export const courseLearningTableColumn = (
   {
     accessorKey: "order",
     header: "Order",
+    cell: ({ row }) => {
+      return <span>{row.original.order}</span>;
+    },
   },
 
   {
@@ -84,7 +87,6 @@ export const courseLearningTableColumn = (
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      const courseLearning = row.original;
 
       const handleDelete = async (
         id: string,
@@ -115,12 +117,11 @@ export const courseLearningTableColumn = (
         <CategoryDropdown
           id={id}
           handleDelete={handleDelete}
-          path={`/dashboard/course-learning/${id}`}
+          path={`/dashboard/course-learning/id/${id}`}
         >
-          <CreateCourseLearning
-            course={course}
-            courseLearning={courseLearning}
-          />
+          <Link href={`/dashboard/course-learning/edit/${id}`} className="cursor-pointer w-full block">
+            Edit
+          </Link>
         </CategoryDropdown>
       );
     },

@@ -34,6 +34,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { updateSection } from "@/service/sections";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -66,19 +68,17 @@ export default function UpdateSection({ sectionId }: UpdateSectionProps) {
     const fetchData = async () => {
       try {
         // Fetch Courses
-        const coursesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (coursesResponse.ok) {
-          const data = await coursesResponse.json();
-          setCourses(data.data || []);
+        const coursesResponse = await getAllCoursesWithoutLimit();
+
+        if (coursesResponse.success) {
+          setCourses(coursesResponse.data || []);
         }
 
         // Fetch Section
         const sectionResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/section/${sectionId}`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/section/${sectionId}`,
         );
-        
+
         if (!sectionResponse.ok) {
           throw new Error("Failed to fetch section details");
         }
@@ -110,35 +110,28 @@ export default function UpdateSection({ sectionId }: UpdateSectionProps) {
     showLoading("Updating section...");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/section/${sectionId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            ...values,
-            order: Number(values.order),
-          }),
-        }
-      );
+      const res = await updateSection({
+        payload: {
+          ...values,
+          order: Number(values.order),
+        },
+        sectionId,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update section");
+      toast.dismiss();
+      if (res.success) {
+        showSuccess({
+          message: res.message || "Section updated successfully",
+        });
+      } else {
+        showError({
+          message: res.message || "Failed to update section",
+        });
       }
 
-      toast.dismiss();
-      showSuccess({
-        message: "Section updated successfully",
-      });
-      router.push("/dashboard/section"); // Adjust redirect path as needed
-      router.refresh();
+      router.push("/dashboard/sections"); // Adjust redirect path as needed
     } catch (error) {
       console.error(error);
-      toast.dismiss();
       showError({
         message:
           error instanceof Error ? error.message : "Something went wrong",
@@ -165,9 +158,7 @@ export default function UpdateSection({ sectionId }: UpdateSectionProps) {
           </Button>
           <CardTitle>Update Section</CardTitle>
         </div>
-        <CardDescription>
-          Update existing section details.
-        </CardDescription>
+        <CardDescription>Update existing section details.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

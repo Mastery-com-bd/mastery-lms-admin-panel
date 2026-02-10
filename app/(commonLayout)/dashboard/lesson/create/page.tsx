@@ -1,9 +1,14 @@
 import CreateLesson from "@/components/dashboard/lesson/create/create-lesson";
+import { getAllCoursesWithoutLimit } from "@/service/course";
 
-const Page = () => {
+const Page = async () => {
+
+  const fetchAllCourse = await getAllCoursesWithoutLimit();
+  
+
   return (
     <div>
-      <CreateLesson />
+      <CreateLesson courses={fetchAllCourse.data} />
     </div>
   );
 };

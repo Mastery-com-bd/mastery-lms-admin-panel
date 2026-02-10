@@ -11,7 +11,7 @@ import {
   Link2,
   KeyRound,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { updateLiveClass } from "@/service/live-class";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -66,61 +67,37 @@ interface LiveClass {
 
 interface UpdateLiveClassProps {
   liveClassId: string;
+  initialData: LiveClass;
 }
 
-export default function UpdateLiveClass({ liveClassId }: UpdateLiveClassProps) {
+const formatIsoToDatetimeLocal = (isoString: string) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+export default function UpdateLiveClass({
+  liveClassId,
+  initialData,
+}: UpdateLiveClassProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      startTime: "",
-      endTime: "",
-      duration: "",
-      meetingUrl: "",
-      meetingId: "",
-      meetingPassword: "",
+      title: initialData.title,
+      description: initialData.description,
+      startTime: formatIsoToDatetimeLocal(initialData.startTime),
+      endTime: formatIsoToDatetimeLocal(initialData.endTime),
+      duration: String(initialData.duration || 60),
+      meetingUrl: initialData.meetingUrl,
+      meetingId: initialData.meetingId,
+      meetingPassword: initialData.meetingPassword,
     },
   });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const liveClassResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/live-class/${liveClassId}`
-        );
-
-        
-        const liveClassData = await liveClassResponse.json();
-        const liveClass: LiveClass = liveClassData.data || liveClassData;
-        console.log("liveClassResponse:", liveClass);
-
-        form.reset({
-          title: liveClass.title,
-          description: liveClass.description,
-          startTime: liveClass.startTime,
-          endTime: liveClass.endTime,
-          duration: String(liveClass.duration || 60),
-          meetingUrl: liveClass.meetingUrl,
-          meetingId: liveClass.meetingId,
-          meetingPassword: liveClass.meetingPassword,
-        });
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-        showError({ message: "Failed to load live class data" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (liveClassId) {
-      fetchData();
-    }
-  }, [liveClassId, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -132,38 +109,27 @@ export default function UpdateLiveClass({ liveClassId }: UpdateLiveClassProps) {
         description: values.description,
         startTime: values.startTime,
         endTime: values.endTime,
-        duration: Number(values.duration) || 60,
+        // duration: Number(values.duration) || 60,
         meetingUrl: values.meetingUrl,
         meetingId: values.meetingId,
         meetingPassword: values.meetingPassword,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/live-class/${liveClassId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-      
-      console.log("Success response:", await response.json());
+      const res = await updateLiveClass(liveClassId, body);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to update live class");
+      if (res.success) {
+        toast.dismiss();
+        showSuccess({
+          message: res.message || "Live class updated successfully",
+        });
+        router.push("/dashboard/live-class");
+        router.refresh();
+      } else {
+        toast.dismiss();
+        showError({
+          message: res.message || "Failed to update live class",
+        });
       }
-
-      toast.dismiss();
-      const data = await response.json().catch(() => null);
-      showSuccess({
-        message: data?.message || "Live class updated successfully",
-      });
-      router.push("/dashboard/live-class");
-      router.refresh();
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -174,14 +140,6 @@ export default function UpdateLiveClass({ liveClassId }: UpdateLiveClassProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
   }
 
   return (

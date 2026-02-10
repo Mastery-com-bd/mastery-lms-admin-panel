@@ -2,13 +2,14 @@
 
 import { Card } from "@/components/ui/card";
 import { TCourse } from "@/types/course.types";
-import CreateCourseLearning from "./CreateCourseLearning";
 import { TMeta } from "@/types/types.meta";
 import CustomPagination from "@/components/ui/CustomPagination";
 import CourseLearningFiltering from "./CourseLearningFiltering";
 import { courseLearningTableColumn } from "./CourseLearningTable";
 import CustomTable from "@/components/ui/CustomTable";
 import { TCourseLearningData } from "@/types/courseLearning.types";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 type TAllCourseLearningProps = {
   course: TCourse[];
@@ -28,7 +29,9 @@ const AllCourseLearning = ({
         <h1 className="text-2xl font-semibold tracking-tight">
           Course Learning
         </h1>
-        <CreateCourseLearning course={course} />
+        <Link href="/dashboard/course-learning/create">
+          <Button className="cursor-pointer">Create Course Learning</Button>
+        </Link>
       </div>
       <Card className="border-none shadow-sm py-4">
         <CourseLearningFiltering />

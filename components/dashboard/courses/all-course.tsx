@@ -138,6 +138,11 @@ const AllCourse = ({ courses, meta }: { courses: Course[]; meta: Meta }) => {
     <div className="flex flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">All Courses</h1>
+        <Button>
+          <Link href="/dashboard/courses/create">
+          Create New Course
+          </Link>
+        </Button>
       </div>
 
       <Card className="border-none shadow-sm">
@@ -332,7 +337,13 @@ const AllCourse = ({ courses, meta }: { courses: Course[]; meta: Meta }) => {
                               Edit course
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>View details</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/dashboard/courses/details/${course.id}`}
+                            >
+                              View details
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600 focus:bg-rose-600 focus:text-white"

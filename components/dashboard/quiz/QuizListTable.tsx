@@ -36,6 +36,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { deleteQuiz } from "@/service/quiz";
 import { format } from "date-fns";
 import {
   FileText,
@@ -141,16 +143,9 @@ export function QuizListTable({ quizzes, meta }: QuizListTableProps) {
   // Course for filter options
   const fetchCourses = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`,
-        {
-          cache: "no-store",
-          credentials: "include",
-        },
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setCourses(data.data || []);
+      const response = await getAllCoursesWithoutLimit();
+      if (response.success) {
+        setCourses(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch courses:", error);
@@ -172,20 +167,16 @@ export function QuizListTable({ quizzes, meta }: QuizListTableProps) {
     showLoading("Deleting quiz...");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz/${quizToDelete}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
+      const res = await deleteQuiz(quizToDelete);
 
-      if (!response.ok) {
-        throw new Error("Failed to delete quiz");
+      if (res.success) {
+        toast.dismiss();
+        router.refresh();
+        showSuccess({ message: res.message || "Quiz deleted successfully" });
+      } else {
+        throw new Error(res.message || "Failed to delete quiz");
       }
-      toast.dismiss();
-      router.refresh();
-      showSuccess({ message: "Quiz deleted successfully" });
+
       setDeleteDialogOpen(false);
       setQuizToDelete(null);
     } catch (error) {

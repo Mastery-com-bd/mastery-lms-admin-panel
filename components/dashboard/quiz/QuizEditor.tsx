@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
+import { getAllLessons } from "@/service/lessons";
+import { createQuiz } from "@/service/quiz";
+import { getAllSections } from "@/service/sections";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import { motion } from "motion/react";
@@ -31,6 +35,7 @@ import { z } from "zod";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
+  sectionId: z.string().optional(),
   lessonId: z.string().min(1, "Please select a lesson"),
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().optional(),
@@ -44,6 +49,11 @@ interface Course {
   title: string;
 }
 
+interface Section {
+  id: string;
+  title: string;
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -51,9 +61,13 @@ interface Lesson {
 
 export function QuizEditor() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingSections, setLoadingSections] = useState(false);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -61,6 +75,7 @@ export function QuizEditor() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       courseId: "",
+      sectionId: "",
       lessonId: "",
       title: "",
       description: "",
@@ -71,17 +86,16 @@ export function QuizEditor() {
   });
 
   const selectedCourseId = form.watch("courseId");
+  const selectedSectionId = form.watch("sectionId");
 
   useEffect(() => {
+    // Fetch All Course
     const fetchCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
+        const response = await getAllCoursesWithoutLimit();
+        if (response.success) {
+          setCourses(response.data || []);
         }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
@@ -94,20 +108,47 @@ export function QuizEditor() {
   }, []);
 
   useEffect(() => {
-    const fetchLessons = async () => {
+    // Fetch Sections when Course changes
+    const fetchSections = async () => {
       if (!selectedCourseId) {
+        setSections([]);
+        form.setValue("sectionId", "");
+        form.setValue("lessonId", "");
+        return;
+      }
+      setLoadingSections(true);
+      try {
+        const response = await getAllSections({ courseId: selectedCourseId });
+        const data = response?.data?.data || response?.data || [];
+        setSections(Array.isArray(data) ? data : []);
+        // Reset child selections
+        form.setValue("sectionId", "");
+        form.setValue("lessonId", "");
+      } catch (error) {
+        console.error("Failed to fetch sections:", error);
+        toast.error("Failed to load sections");
+      } finally {
+        setLoadingSections(false);
+      }
+    };
+    fetchSections();
+  }, [selectedCourseId, form]);
+
+  useEffect(() => {
+    // Fetch Lessons when Section changes
+    const fetchLessons = async () => {
+      if (!selectedSectionId) {
         setLessons([]);
+        form.setValue("lessonId", "");
         return;
       }
       setLoadingLessons(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/lesson?courseId=${selectedCourseId}&limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setLessons(data.data || []);
-        }
+        const response = await getAllLessons({ sectionId: selectedSectionId });
+        const data = response?.data?.data || response?.data || [];
+        setLessons(Array.isArray(data) ? data : []);
+        // Reset child selection
+        form.setValue("lessonId", "");
       } catch (error) {
         console.error("Failed to fetch lessons:", error);
         toast.error("Failed to load lessons");
@@ -116,7 +157,7 @@ export function QuizEditor() {
       }
     };
     fetchLessons();
-  }, [selectedCourseId]);
+  }, [selectedSectionId, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -133,37 +174,24 @@ export function QuizEditor() {
         timeLimit: values.timeLimit ?? 1,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/quiz`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(errorData.message || "Failed to create quiz");
-      }
-
+      const res = await createQuiz(body);
       toast.dismiss();
-      showSuccess({ message: "Quiz created successfully" });
-      form.reset({
-        courseId: "",
-        lessonId: "",
-        title: "",
-        description: "",
-        type: "LESSON",
-        passingScore: 70,
-        timeLimit: null,
-      });
-      router.refresh();
-      setLessons([]);
+
+      if (res.success) {
+        showSuccess({ message: res.message || "Quiz created successfully" });
+        router.push("/dashboard/quiz");
+        form.reset({
+          courseId: "",
+          lessonId: "",
+          title: "",
+          description: "",
+          type: "LESSON",
+          passingScore: 70,
+          timeLimit: null,
+        });
+      } else {
+        showError({ message: res.message || "Failed to create quiz" });
+      }
     } catch (error) {
       console.error(error);
       toast.dismiss();
@@ -269,7 +297,7 @@ export function QuizEditor() {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="courseId"
@@ -280,7 +308,11 @@ export function QuizEditor() {
                           <span className="text-destructive">*</span>
                         </FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue("sectionId", "");
+                            form.setValue("lessonId", "");
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -309,6 +341,56 @@ export function QuizEditor() {
 
                   <FormField
                     control={form.control}
+                    name="sectionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Filter by Section <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue("lessonId", "");
+                          }}
+                          defaultValue={field.value}
+                          disabled={!selectedCourseId || loadingSections || (!loadingSections && sections.length === 0)}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  !selectedCourseId
+                                    ? "Select a course first"
+                                    : loadingSections
+                                      ? "Loading sections..."
+                                      : sections.length === 0
+                                        ? "No section available"
+                                        : "Select a section"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sections.length > 0 ? (
+                              sections.map((section) => (
+                                <SelectItem key={section.id} value={section.id}>
+                                  {section.title}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-sections" disabled>
+                                No sections found
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="lessonId"
                     render={({ field }) => (
                       <FormItem>
@@ -318,27 +400,35 @@ export function QuizEditor() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={!selectedCourseId || lessons.length === 0}
+                          disabled={!selectedSectionId || loadingLessons || (!loadingLessons && lessons.length === 0)}
                         >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue
                                 placeholder={
-                                  !selectedCourseId
-                                    ? "Select a course first"
+                                  !selectedSectionId
+                                    ? "Select a section first"
                                     : loadingLessons
-                                    ? "Loading lessons..."
-                                    : "Select a lesson"
+                                      ? "Loading lessons..."
+                                      : lessons.length === 0
+                                        ? "No lesson available"
+                                        : "Select a lesson"
                                 }
                               />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {lessons.map((lesson) => (
-                              <SelectItem key={lesson.id} value={lesson.id}>
-                                {lesson.title}
+                            {lessons.length > 0 ? (
+                              lessons.map((lesson) => (
+                                <SelectItem key={lesson.id} value={lesson.id}>
+                                  {lesson.title}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-lessons" disabled>
+                                No lessons found
                               </SelectItem>
-                            ))}
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -394,7 +484,7 @@ export function QuizEditor() {
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             )
                           }
                           min={1}
@@ -422,7 +512,7 @@ export function QuizEditor() {
                           value={field.value}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value ? Number(e.target.value) : 0
+                              e.target.value ? Number(e.target.value) : 0,
                             )
                           }
                         />

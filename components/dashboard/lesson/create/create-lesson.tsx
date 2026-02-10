@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getYouTubeEmbedUrl } from "@/lib/utils";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -46,17 +48,51 @@ const formSchema = z.object({
   duration: z.string().optional(),
   order: z.string().min(1, "Order must be a positive number"),
   isPreview: z.boolean(),
-  videoUrl: z
-    .instanceof(File)
-    .refine((file) => file !== undefined, "Video file is required")
-    .refine(
-      (file) => file?.type.startsWith("video/"),
-      "File must be a video"
-    )
-    .refine(
-      (file) => file?.size <= 100 * 1024 * 1024,
-      "Video size must be less than 100MB"
-    ), // 100MB limit example
+  videoType: z.enum(["upload", "url"]),
+  videoUrl: z.union([z.instanceof(File), z.string()]).optional(),
+}).superRefine((data, ctx) => {
+  if (data.videoType === "upload") {
+    if (!(data.videoUrl instanceof File)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Video file is required",
+        path: ["videoUrl"],
+      });
+    } else {
+      if (!data.videoUrl.type.startsWith("video/")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "File must be a video",
+          path: ["videoUrl"],
+        });
+      }
+      if (data.videoUrl.size > 100 * 1024 * 1024) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Video size must be less than 100MB",
+          path: ["videoUrl"],
+        });
+      }
+    }
+  } else if (data.videoType === "url") {
+    if (typeof data.videoUrl !== "string" || data.videoUrl.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Video URL is required",
+        path: ["videoUrl"],
+      });
+    } else {
+      try {
+        new URL(data.videoUrl);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please enter a valid URL",
+          path: ["videoUrl"],
+        });
+      }
+    }
+  }
 });
 
 interface Section {
@@ -69,9 +105,8 @@ interface Course {
   title: string;
 }
 
-export default function CreateLesson() {
+export default function CreateLesson({ courses }: { courses: Course[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [selectLoading, setSelectLoading] = useState(false);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -88,28 +123,14 @@ export default function CreateLesson() {
       duration: "",
       order: "",
       isPreview: false,
+      videoType: "upload",
     },
   });
 
   const selectedCourseId = form.watch("courseId");
+  const videoType = form.watch("videoType");
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch courses:", error);
-        toast.error("Failed to load courses");
-      }
-    };
-    fetchCourses();
-  }, []);
+  
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -162,7 +183,7 @@ export default function CreateLesson() {
       formData.append("duration", values.duration || "");
       formData.append("order", values.order);
       formData.append("isPreview", String(values.isPreview));
-
+      formData.append("videoType", values.videoType);
       if (values.videoUrl) {
         formData.append("videoUrl", values.videoUrl);
       }
@@ -194,6 +215,7 @@ export default function CreateLesson() {
         duration: "",
         order: String(Number(values.order) + 1),
         isPreview: false,
+        videoType: "upload",
       });
       setVideoPreview(null);
       router.refresh();
@@ -394,54 +416,103 @@ export default function CreateLesson() {
                 <FormItem>
                   <FormLabel>Video Lesson</FormLabel>
                   <FormControl>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            document.getElementById("video-upload")?.click()
-                          }
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Video
-                        </Button>
+                    <Tabs
+                      defaultValue="upload"
+                      value={videoType}
+                      onValueChange={(val) => {
+                        form.setValue("videoType", val as "upload" | "url");
+                        form.setValue("videoUrl", undefined);
+                        setVideoPreview(null);
+                        form.clearErrors("videoUrl");
+                      }}
+                      className="w-full"
+                    >
+                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="upload">Upload Video</TabsTrigger>
+                        <TabsTrigger value="url">Video URL</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="upload" className="mt-0">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                document.getElementById("video-upload")?.click()
+                              }
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload Video
+                            </Button>
+                            <Input
+                              id="video-upload"
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              onChange={handleVideoChange}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {value instanceof File && value.size > 0
+                                ? value.name
+                                : "No video selected"}
+                            </span>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="url" className="mt-0">
                         <Input
+                          placeholder="Enter video URL (e.g. https://example.com/video.mp4)"
                           {...field}
-                          id="video-upload"
-                          type="file"
-                          accept="video/*"
-                          className="hidden"
-                          onChange={handleVideoChange}
+                          value={typeof value === "string" ? value : ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const embedUrl = getYouTubeEmbedUrl(val);
+                            if (embedUrl) {
+                              field.onChange(embedUrl);
+                              setVideoPreview(embedUrl);
+                            } else {
+                              field.onChange(e);
+                              setVideoPreview(val);
+                            }
+                          }}
                         />
-                        <span className="text-sm text-muted-foreground">
-                          {value instanceof File && value.size > 0
-                            ? value.name
-                            : "No video selected"}
-                        </span>
-                      </div>
+                      </TabsContent>
 
                       {videoPreview && (
-                        <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border bg-black">
-                          <video
-                            src={videoPreview}
-                            controls
-                            className="w-full h-full"
-                          />
+                        <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border bg-black mt-4">
+                          {videoPreview.includes("youtube.com/embed") ? (
+                            <iframe
+                              src={videoPreview}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="Video preview"
+                            />
+                          ) : (
+                            <video
+                              src={videoPreview}
+                              controls
+                              className="w-full h-full"
+                            />
+                          )}
                         </div>
                       )}
                       {!videoPreview && (
-                        <div className="flex items-center justify-center w-full max-w-md aspect-video rounded-lg border border-dashed bg-muted/50">
+                        <div className="flex items-center justify-center w-full max-w-md aspect-video rounded-lg border border-dashed bg-muted/50 mt-4">
                           <div className="flex flex-col items-center gap-2 text-muted-foreground">
                             <Video className="w-8 h-8" />
                             <span className="text-sm">Video Preview</span>
                           </div>
                         </div>
                       )}
-                    </div>
+                    </Tabs>
                   </FormControl>
                   <FormDescription>
-                    Upload a video file for the lesson. Max size 100MB.
+                    {videoType === "upload"
+                      ? "Upload a video file (max 100MB)."
+                      : "Enter a direct video URL."}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

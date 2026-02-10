@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { getAllCoursesWithoutLimit } from "@/service/course";
 
 const formSchema = z.object({
   courseId: z.string().min(1, "Please select a course"),
@@ -89,19 +90,16 @@ export default function UpdateLesson({ lessonId }: UpdateLessonProps) {
 
   const selectedCourseId = form.watch("courseId");
 
-  console.log("Fetched Data:", courses, sections);
-
   // Fetch initial data
   useEffect(() => {
+
+    // Fetch All Course
     const fetchData = async () => {
       try {
         // Fetch Courses
-        const coursesRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course?limit=100`
-        );
-        if (coursesRes.ok) {
-          const data = await coursesRes.json();
-          setCourses(data.data || []);
+        const coursesRes = await getAllCoursesWithoutLimit();
+        if (coursesRes.success) {
+          setCourses(coursesRes.data || []);
         }
 
         // Fetch Lesson

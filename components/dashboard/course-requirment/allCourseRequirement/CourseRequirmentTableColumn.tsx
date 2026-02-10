@@ -9,9 +9,9 @@ import { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { TCourseLearningData } from "@/types/courseLearning.types";
 import { deleteCourseRequirment } from "@/service/courseRequirment";
-import CreateAllCourseRequirment from "./CreateAllCourseRequirment";
 import { TCourse } from "@/types/course.types";
 import TooltipComponent from "@/components/ui/TooltipComponent";
+import Link from "next/link";
 
 export const courseRequirmentTableColumn = (
   course: TCourse[],
@@ -84,7 +84,6 @@ export const courseRequirmentTableColumn = (
     header: "Action",
     cell: ({ row }) => {
       const id = row.original?.id;
-      const courseRequirment = row.original;
 
       const handleDelete = async (
         id: string,
@@ -115,12 +114,11 @@ export const courseRequirmentTableColumn = (
         <CategoryDropdown
           id={id}
           handleDelete={handleDelete}
-          path={`/dashboard/course-requirment/${id}`}
+          path={`/dashboard/course-requirment/id/${id}`}
         >
-          <CreateAllCourseRequirment
-            course={course}
-            courseRequirment={courseRequirment}
-          />
+          <Link href={`/dashboard/course-requirment/edit/${id}`} className="cursor-pointer w-full block">
+            Edit
+          </Link>
         </CategoryDropdown>
       );
     },

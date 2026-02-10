@@ -27,6 +27,25 @@ export const createCourse = async (data: FormData) => {
   }
 };
 
+export const updateCourse = async (id: string, data: FormData) => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(`${config.next_public_base_url}/course/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: token,
+      },
+      body: data,
+    });
+    const result = await res.json();
+    revalidateTag("Course", "default");
+    revalidatePath("/dashboard/courses");
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};
+
 export const getAllCourseElement = async (query?: TQuery) => {
   // const token = await getValidToken();
   try {
@@ -51,11 +70,15 @@ export const getAllCourseElement = async (query?: TQuery) => {
 };
 
 export const getAllCourses = cache(async (query?: TQuery) => {
+  const token = await getValidToken();
   try {
     const res = await fetch(
       `${config.next_public_base_url}/course?${buildParams(query)}`,
       {
         method: "GET",
+        headers: {
+          Authorization: token,
+        },
         next: {
           tags: ["Course"],
           revalidate: 30,
@@ -68,3 +91,63 @@ export const getAllCourses = cache(async (query?: TQuery) => {
     return Error(error);
   }
 });
+
+export const getCourseDetailsById = async (id: string) => {
+
+  const res = await fetch(`${config.next_public_base_url}/course/${id}`, {
+    method: "GET",
+    next: {
+      tags: [`Course-${id}`],
+      revalidate: 30,
+    },
+  });
+  const result = await res.json();
+  return result;
+
+}
+
+export const getAllCoursesWithoutLimit = cache(async () => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/course?limit=100`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+        next: {
+          tags: ["Course"],
+          revalidate: 300,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+});
+
+export const getStudentAllEnrollrdCourses = async () => {
+  const token = await getValidToken();
+  try {
+    const res = await fetch(
+      `${config.next_public_base_url}/enrollment/my-enrollments`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+        next: {
+          tags: ["MyCourses"],
+          revalidate: 30,
+        },
+      },
+    );
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return Error(error);
+  }
+};

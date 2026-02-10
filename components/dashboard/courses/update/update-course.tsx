@@ -36,10 +36,12 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { showError, showLoading, showSuccess } from "@/lib/toast";
+import { TCourse } from "@/types/course.types";
+import { updateCourse } from "@/service/course";
 
 // Constants for select options
 const COURSE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
-const LANGUAGES = ["ENGLISH", "SPANISH", "FRENCH", "GERMAN", "HINDI"];
+const LANGUAGES = ["BANGLA", "ENGLISH", "SPANISH", "FRENCH", "GERMAN", "HINDI"];
 const LEARNING_TYPES = ["ONLINE", "HYBRID", "OFFLINE"];
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"];
 
@@ -70,92 +72,38 @@ const formSchema = z.object({
     .optional(),
 });
 
-export default function UpdateCourse({ courseId }: { courseId: string }) {
+export default function UpdateCourse({
+  courseId,
+  courseDetails,
+  categories,
+}: {
+  courseId: string;
+  courseDetails: TCourse;
+  categories: { id: string; name: string }[];
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
-  );
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(courseDetails?.thumbnail || null);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      subtitle: "",
-      description: "",
-      shortDescription: "",
-      categoryId: "",
-      price: "",
-      discountPrice: "",
-      level: "BEGINNER",
-      language: "ENGLISH",
-      courseLeaningType: "ONLINE",
-      duration: "",
-      status: "DRAFT",
-      isFeatured: false,
+      title: courseDetails?.title || "",
+      subtitle: courseDetails?.subtitle || "",
+      description: courseDetails?.description || "",
+      shortDescription: courseDetails?.shortDescription || "",
+      categoryId: courseDetails?.categoryId || "",
+      price: String(courseDetails?.price || ""),
+      discountPrice: String(courseDetails?.discountPrice || ""),
+      level: courseDetails?.level || "BEGINNER",
+      language: courseDetails?.language || "BANGLA",
+      courseLeaningType: courseDetails?.courseLeaningType || "ONLINE",
+      duration: String(courseDetails?.duration || ""),
+      status: courseDetails?.status || "DRAFT",
+      isFeatured: courseDetails?.isFeatured || false,
     },
   });
-
-  // Fetch Course and Categories on mount
-  useEffect(() => {
-    async function fetchData() {
-      if (!courseId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch Categories
-        const categoriesRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/category?limit=100`
-        );
-        if (categoriesRes.ok) {
-          const data = await categoriesRes.json();
-          setCategories(data.data || []);
-        }
-
-        // Fetch Course
-        const courseRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/course/${courseId}`
-        );
-        if (!courseRes.ok) {
-          throw new Error("Failed to fetch course");
-        }
-
-        const courseData = await courseRes.json();
-        const course = courseData.data || courseData; // Adjust based on actual API response
-
-        // Set form values
-        form.reset({
-          title: course.title,
-          subtitle: course.subtitle || "",
-          description: course.description,
-          shortDescription: course.shortDescription || "",
-          categoryId: course.categoryId,
-          price: String(course.price || ""),
-          discountPrice: String(course.discountPrice || ""),
-          level: course.level,
-          language: course.language,
-          courseLeaningType: course.courseLeaningType,
-          duration: String(course.duration || ""),
-          status: course.status,
-          isFeatured: course.isFeatured,
-        });
-
-        if (course.thumbnail) {
-          setThumbnailPreview(course.thumbnail);
-        }
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-        showError({ message: "Failed to load course data" });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [courseId, form]);
 
   // Handle Thumbnail Preview
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,19 +149,20 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
         formData.append("thumbnail", values.thumbnail[0]);
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/course/${courseId}`, {
-        method: "PATCH",
-        body: formData,
-        credentials: "include",
-      });
+      const result = await updateCourse(courseId, formData);
 
       toast.dismiss();
 
-      showSuccess({
-        message: "Course updated successfully",
-      });
-      //   toast.success("Course updated successfully")
-      router.push("/dashboard/courses");
+      if (result.success) {
+        showSuccess({
+          message: "Course updated successfully",
+        });
+        router.push("/dashboard/courses");
+      } else {
+        showError({
+            message: result.message || "Failed to update course",
+        });
+      }
     } catch (error) {
       console.error(error);
       showError({
@@ -223,14 +172,6 @@ export default function UpdateCourse({ courseId }: { courseId: string }) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
   }
 
   if (!courseId) {

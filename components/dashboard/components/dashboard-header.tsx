@@ -20,9 +20,11 @@ import {
   Bell,
   Download,
   Filter,
+  Moon,
   MoreHorizontal,
   RefreshCw,
   Search,
+  Sun,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { memo, useState } from "react";
@@ -61,17 +63,6 @@ export const DashboardHeader = memo(() => {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-2"
         >
-          {/* Search Input - Hide on Mobile */}
-          <div className="relative hidden md:block">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 pl-10"
-            />
-          </div>
-
           {/* Desktop Actions */}
           <div className="hidden items-center gap-2 md:flex">
             <Button
@@ -79,13 +70,22 @@ export const DashboardHeader = memo(() => {
               size="sm"
               onClick={() => {
                 const root = document.documentElement;
-                const currentTheme = root.classList.contains("dark") ? "dark" : "light";
+                const currentTheme = root.classList.contains("dark")
+                  ? "dark"
+                  : "light";
                 root.classList.toggle("dark");
-                localStorage.setItem("theme", currentTheme === "dark" ? "light" : "dark");
+                localStorage.setItem(
+                  "theme",
+                  currentTheme === "dark" ? "light" : "dark",
+                );
               }}
             >
-              <span className="hidden dark:inline">🌞</span>
-              <span className="dark:hidden">🌙</span>
+              <span className="hidden dark:inline">
+                <Sun className="h-4 w-4" />
+              </span>
+              <span className="dark:hidden">
+                <Moon className="h-4 w-4" />
+              </span>
             </Button>
           </div>
 
@@ -116,9 +116,9 @@ export const DashboardHeader = memo(() => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Bell className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </motion.div>
       </div>
     </header>

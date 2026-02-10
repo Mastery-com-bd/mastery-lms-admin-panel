@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mastery LMS",
+  title: "Mini Online Skill",
   description:
     "This is a Learning management system made by Mastery Corporation",
 };
