@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { showError } from "@/lib/toast";
-import { getAllUsers } from "@/service/user";
+import { getAllUsers, getEligebleStudents } from "@/service/user";
 import Image from "next/image";
 import { createCertificate } from "@/service/certificate";
 
@@ -70,7 +70,6 @@ interface Course {
 }
 
 interface CreateCertificateProps {
-  users: User[];
   courses: Course[];
 }
 
@@ -80,16 +79,13 @@ const formSchema = z.object({
   certificatImage: z.any().optional(),
 });
 
-const CreateCertificate = ({
-  users: initialUsers,
-  courses,
-}: CreateCertificateProps) => {
+const CreateCertificate = ({ courses }: CreateCertificateProps) => {
   const router = useRouter();
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   // States for student search
   const [open, setOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -101,6 +97,38 @@ const CreateCertificate = ({
       certificatImage: undefined,
     },
   });
+
+  const selectedCourseId = form.watch("courseId");
+
+  useEffect(() => {
+    const fetchEligibleStudents = async () => {
+      if (!selectedCourseId) {
+        setUsers([]);
+        return;
+      }
+
+      setIsSearching(true);
+
+      try {
+        const res = await getEligebleStudents(selectedCourseId);
+
+        if (res?.success && res?.data) {
+          setUsers(res.data);
+        } else {
+          setUsers([]);
+        }
+
+        form.setValue("userId", "");
+      } catch (error) {
+        console.error("Failed to fetch eligible students", error);
+        setUsers([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    fetchEligibleStudents();
+  }, [form, selectedCourseId]);
 
   // Debounced search for users
   useEffect(() => {
@@ -124,12 +152,12 @@ const CreateCertificate = ({
         }
       } else {
         // Reset to initial users if search is cleared
-        setUsers(initialUsers);
+        setUsers([]);
       }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, initialUsers]);
+  }, [searchTerm]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
